@@ -17,9 +17,8 @@ Connexion pour les utilisateurs
 Installation
 
 Cloner le projet :
-
-git clone <lien du repo>
-
+if u have ssh key: git clone git@github.com:Zemoo8/gestion-absences-faculte.git
+if u dont have ssh key: git clone https://github.com/Zemoo8/gestion-absences-faculte.git
 
 Importer la base de données (fichier .sql) dans phpMyAdmin
 

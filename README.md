@@ -1,4 +1,4 @@
- Gestion des Absences – Projet PHP
+  Gestion des Absences – Projet PHP
 
 Ce projet permet de gérer les absences des étudiants dans une faculté.
 

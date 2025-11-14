@@ -29,6 +29,50 @@ Travail en équipe
 La branche main contient le code stable
 
 Chaque fonctionnalité sera faite dans une branche séparée
+gestion-absences-faculte/
+│
+├─ README.md
+├─ config.php
+├─ index.php
+│
+├─ assets/
+│   ├─ css/
+│   │   └─ style.css
+│   ├─ js/
+│   │   └─ script.js
+│   └─ images/
+│
+├─ controllers/
+│   ├─ authController.php
+│   ├─ studentController.php
+│   ├─ moduleController.php
+│   └─ attendanceController.php
+│
+├─ models/
+│   ├─ Student.php
+│   ├─ Module.php
+│   └─ Attendance.php
+│
+├─ views/
+│   ├─ auth/
+│   │   └─ login.php
+│   ├─ professor/
+│   │   ├─ dashboard.php
+│   │   └─ attendance.php
+│   ├─ admin/
+│   │   ├─ dashboard.php
+│   │   ├─ manage_students.php
+│   │   └─ manage_modules.php
+│   └─ partials/
+│       ├─ header.php
+│       ├─ footer.php
+│       └─ sidebar.php
+│
+├─ database/
+│   └─ backup.sql
+│
+└─ .gitignore
+
 
 Auteurs
 

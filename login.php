@@ -42,4 +42,3 @@ if(isset($_POST['login'])){
     Password: <input type="password" name="password" required><br>
     <button type="submit" name="login">Login</button>
 </form>
-<p><a href="register.php">Regist

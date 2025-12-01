@@ -1,6 +1,13 @@
-CREATE DATABASE IF NOT EXISTS gestion_absences;
+-- Delete old DB if exists
+DROP DATABASE IF EXISTS gestion_absences;
+
+-- Create fresh DB
+CREATE DATABASE gestion_absences;
 USE gestion_absences;
 
+----------------------------------------------------------
+-- USERS TABLE (admin, professor, student)
+----------------------------------------------------------
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nom VARCHAR(100) NOT NULL,
@@ -10,11 +17,19 @@ CREATE TABLE users (
     role ENUM('student','admin','professor') NOT NULL DEFAULT 'student'
 );
 
+----------------------------------------------------------
+-- MODULES TABLE
+----------------------------------------------------------
 CREATE TABLE modules (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    module_name VARCHAR(150) NOT NULL
+    module_name VARCHAR(150) NOT NULL,
+    professor_id INT NOT NULL,
+    FOREIGN KEY (professor_id) REFERENCES users(id)
 );
 
+----------------------------------------------------------
+-- ATTENDANCE TABLE
+----------------------------------------------------------
 CREATE TABLE attendance (
     id INT AUTO_INCREMENT PRIMARY KEY,
     student_id INT NOT NULL,
@@ -24,3 +39,38 @@ CREATE TABLE attendance (
     FOREIGN KEY (student_id) REFERENCES users(id),
     FOREIGN KEY (module_id) REFERENCES modules(id)
 );
+
+----------------------------------------------------------
+-- ACCOUNT REQUESTS TABLE (students requesting access)
+----------------------------------------------------------
+CREATE TABLE account_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nom VARCHAR(100) NOT NULL,
+    prenom VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('pending','approved','rejected') DEFAULT 'pending'
+);
+
+----------------------------------------------------------
+-- NOTIFICATIONS TABLE (e.g., absence limit reached)
+----------------------------------------------------------
+CREATE TABLE notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    message TEXT NOT NULL,
+    is_read TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+Emails (2):
+
+Max absence
+
+Account credentials
+
+Notifications (2):
+
+Admin sees account requests
+
+Student sees “your account is ready” (optional)

@@ -1,23 +1,75 @@
 <?php
 session_start();
 require_once 'config.php';
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-require 'PHPMailer/src/Exception.php';
-require 'PHPMailer/src/PHPMailer.php';
-require 'PHPMailer/src/SMTP.php';
 
 if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin'){
     header("Location: ../login/login.php");
     exit();
 }
 
+// Pending requests for notification bell
+$pending_requests = $mysqli->query("
+    SELECT id, nom, prenom, email, created_at 
+    FROM account_requests 
+    WHERE status = 'pending' 
+    ORDER BY created_at DESC 
+    LIMIT 5"
+);
+
 $msg = "";
 
-// === APPROVE REQUEST (GET) - Sends email ===
+if($_SERVER["REQUEST_METHOD"] == "POST"){
+    $nom = trim($_POST['nom']);
+    $prenom = trim($_POST['prenom']);
+    $email = trim($_POST['email']);
+    $role = $_POST['role'];
+
+    if(empty($nom) || empty($prenom) || empty($email)) {
+        $msg = "<div style='color:#ff3b3b;margin-bottom:1rem;'>All fields required!</div>";
+    } elseif(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $msg = "<div style='color:#ff3b3b;margin-bottom:1rem;'>Invalid email!</div>";
+    } else {
+        $check = $mysqli->prepare("SELECT id FROM users WHERE email=?");
+        $check->bind_param("s", $email);
+        $check->execute();
+        if($check->get_result()->num_rows > 0) {
+            $msg = "<div style='color:#ff3b3b;margin-bottom:1rem;'>Email exists!</div>";
+        } else {
+            $pass = bin2hex(random_bytes(4));
+            $hashed = password_hash($pass, PASSWORD_DEFAULT);
+            $stmt = $mysqli->prepare("INSERT INTO users (nom, prenom, email, password, role) VALUES (?, ?, ?, ?, ?)");
+            $stmt->bind_param("sssss", $nom, $prenom, $email, $hashed, $role);
+            if($stmt->execute()){
+                $msg = "<div style='color:#00e676;margin-bottom:1rem;'>User created! Password: <strong>$pass</strong></div>";
+            }
+        }
+    }
+}
+?>
+<?php
+
+
+if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin'){
+    header("Location: ../login/login.php");
+    exit();
+}
+
+// Pending requests for notification bell
+$pending_requests = $mysqli->query("
+    SELECT id, nom, prenom, email, created_at 
+    FROM account_requests 
+    WHERE status = 'pending' 
+    ORDER BY created_at DESC 
+    LIMIT 5"
+);
+
+$msg = "";
+
+// Approve request from notification dropdown
 if(isset($_GET['email'])){
-    $req_email = trim($_GET['email']);
+    $req_email = $_GET['email'];
     
+    // Get request data
     $stmt = $mysqli->prepare("SELECT id, nom, prenom, email FROM account_requests WHERE email=? AND status='pending'");
     $stmt->bind_param("s", $req_email);
     $stmt->execute();
@@ -27,37 +79,37 @@ if(isset($_GET['email'])){
         $request = $result->fetch_assoc();
         $nom = $request['nom'];
         $prenom = $request['prenom'];
-        $user_email = $request['email'];
+        $user_email = $request['email']; // where we send credentials
         
-        // Generate credentials
+        // Generate login email and password
         $generated_email = strtolower($nom . $prenom . rand(10,99)) . ".macademia@gmail.com";
         $generated_pass = bin2hex(random_bytes(4));
         $hashed_pass = password_hash($generated_pass, PASSWORD_DEFAULT);
         $role = 'student';
 
-        // Insert user
+        // Insert into users table
         $stmt2 = $mysqli->prepare("INSERT INTO users (nom, prenom, email, password, role) VALUES (?, ?, ?, ?, ?)");
         $stmt2->bind_param("sssss", $nom, $prenom, $generated_email, $hashed_pass, $role);
-        
         if($stmt2->execute()){
-            // Mark as approved
+            // Mark request as approved
             $stmt3 = $mysqli->prepare("UPDATE account_requests SET status='approved' WHERE id=?");
             $stmt3->bind_param("i", $request['id']);
             $stmt3->execute();
 
-            // Send email
+            // Send email with credentials to the requested email
             $mail = new PHPMailer(true);
             try {
                 $mail->isSMTP();
                 $mail->Host = 'smtp.gmail.com';
                 $mail->SMTPAuth = true;
-                $mail->Username = 'farouk.zemoo@gmail.com';
-                $mail->Password = 'kibh ehzs ofxg zpem';
+                $mail->Username = 'farouk.zemoo@gmail.com'; // your sending Gmail
+                $mail->Password = 'kibh ehzs ofxg zpem'; // use App Password
                 $mail->SMTPSecure = 'tls';
                 $mail->Port = 587;
 
                 $mail->setFrom('farouk.zemoo@gmail.com', 'macademia Faculty System');
-                $mail->addAddress($user_email);
+                $mail->addAddress($user_email); // send to requested email
+
                 $mail->isHTML(true);
                 $mail->Subject = 'Your Faculty Account Credentials';
                 $mail->Body = "
@@ -69,23 +121,19 @@ if(isset($_GET['email'])){
                 ";
 
                 $mail->send();
-                $msg = "Account approved and credentials sent to {$user_email}!";
+                $msg = "<div style='color:#00e676;margin-bottom:1rem;'>Account approved and credentials sent to {$user_email}!</div>";
             } catch (Exception $e) {
-                $msg = "User created but email failed: {$mail->ErrorInfo}";
+                $msg = "<div style='color:#ff3b3b;margin-bottom:1rem;'>User created but email failed: {$mail->ErrorInfo}</div>";
             }
-            
-            // Redirect
-            header("Location: adduser.php?msg=" . urlencode($msg));
-            exit();
         } else {
-            $msg = "Failed to create user!";
+            $msg = "<div style='color:#ff3b3b;margin-bottom:1rem;'>Failed to create user!</div>";
         }
     } else {
-        $msg = "Request not found or already approved!";
+        $msg = "<div style='color:#ff3b3b;margin-bottom:1rem;'>Request not found or already approved!</div>";
     }
 }
 
-// === MANUAL USER CREATION (POST) - NOW ALSO SENDS EMAIL ===
+// Manual user creation via form
 if($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_GET['email'])){
     $nom = trim($_POST['nom']);
     $prenom = trim($_POST['prenom']);
@@ -97,71 +145,24 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_GET['email'])){
     } elseif(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $msg = "<div style='color:#ff3b3b;margin-bottom:1rem;'>Invalid email!</div>";
     } else {
-        // Check if email exists
         $check = $mysqli->prepare("SELECT id FROM users WHERE email=?");
         $check->bind_param("s", $email);
         $check->execute();
-        
         if($check->get_result()->num_rows > 0) {
             $msg = "<div style='color:#ff3b3b;margin-bottom:1rem;'>Email exists!</div>";
         } else {
-            // Generate credentials
             $pass = bin2hex(random_bytes(4));
             $hashed = password_hash($pass, PASSWORD_DEFAULT);
-            
-            // Insert user
             $stmt = $mysqli->prepare("INSERT INTO users (nom, prenom, email, password, role) VALUES (?, ?, ?, ?, ?)");
             $stmt->bind_param("sssss", $nom, $prenom, $email, $hashed, $role);
-            
             if($stmt->execute()){
-                // === SEND EMAIL TO THE NEW USER ===
-                $mail = new PHPMailer(true);
-                try {
-                    $mail->isSMTP();
-                    $mail->Host = 'smtp.gmail.com';
-                    $mail->SMTPAuth = true;
-                    $mail->Username = 'farouk.zemoo@gmail.com';
-                    $mail->Password = 'kibh ehzs ofxg zpem';
-                    $mail->SMTPSecure = 'tls';
-                    $mail->Port = 587;
-
-                    $mail->setFrom('farouk.zemoo@gmail.com', 'macademia Faculty System');
-                    $mail->addAddress($email); // Send to the email from the form
-                    $mail->isHTML(true);
-                    $mail->Subject = 'Your Faculty Account Credentials';
-                    $mail->Body = "
-                        <h2>Account Created</h2>
-                        <p>Hi <strong>{$nom} {$prenom}</strong>, your account has been created!</p>
-                        <p><strong>Login Email:</strong> {$email}</p>
-                        <p><strong>Password:</strong> {$pass}</p>
-                        <p><strong>Role:</strong> {$role}</p>
-                        <p>Please log in and change your password after first login.</p>
-                    ";
-
-                    $mail->send();
-                    $msg = "<div style='color:#00e676;margin-bottom:1rem;'>User created and email sent! Password: <strong>{$pass}</strong></div>";
-                } catch (Exception $e) {
-                    $msg = "<div style='color:#ff3b3b;margin-bottom:1rem;'>User created but email failed: {$mail->ErrorInfo}</div>";
-                }
-                
-                // Optional: Redirect to prevent resubmission
-                // header("Location: adduser.php?msg=" . urlencode($msg));
-                // exit();
+                $msg = "<div style='color:#00e676;margin-bottom:1rem;'>User created! Password: <strong>$pass</strong></div>";
             } else {
                 $msg = "<div style='color:#ff3b3b;margin-bottom:1rem;'>Failed to create user!</div>";
             }
         }
     }
 }
-
-// === NOTIFICATION QUERY - Single instance at the end ===
-$pending_requests = $mysqli->query("
-    SELECT id, nom, prenom, email, created_at 
-    FROM account_requests 
-    WHERE status = 'pending' 
-    ORDER BY created_at DESC 
-    LIMIT 5"
-);
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
@@ -664,6 +665,8 @@ body {
             <li><a href="userlist.php" class="sidebar-link"><i class="bi bi-people"></i><span>User List</span></a></li>
             <li><a href="addmodule.php" class="sidebar-link"><i class="bi bi-bookmark-plus"></i><span>Add Module</span></a></li>
             <li><a href="modulelist.php" class="sidebar-link"><i class="bi bi-bookshelf"></i><span>Module List</span></a></li>
+                <li><a href="classes.php" class="sidebar-link"><i class="bi bi-collection"></i><span>Manage Classes</span></a></li>
+            <li><a href="assign_students.php" class="sidebar-link"><i class="bi bi-person-check"></i><span>Assign Students</span></a></li>
             <li><a href="attendancerecord.php" class="sidebar-link"><i class="bi bi-clipboard-data"></i><span>Attendance</span></a></li>
             <li><a href="notif.php" class="sidebar-link"><i class="bi bi-bell"></i><span>Notifications</span></a></li>
             <li><a href="logout.php" class="sidebar-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a></li>

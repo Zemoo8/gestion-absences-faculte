@@ -18,43 +18,38 @@ $pending_requests = $mysqli->query("
 
 $msg = "";
 
+// Assigner des étudiants à une classe
 if($_SERVER["REQUEST_METHOD"] == "POST"){
-    $name = trim($_POST['module_name']);
-    $professor_id = (int)$_POST['professor_id'];
-    $class_ids = $_POST['class_ids'] ?? [];
+    $class_id = (int)$_POST['class_id'];
+    $student_ids = $_POST['student_ids'] ?? [];
 
-    if(empty($name) || empty($professor_id) || empty($class_ids)) {
-        $msg = "<div style='color:#ff3b3b;margin-bottom:1rem;'>All fields required (module, professor, at least one class)!</div>";
+    if(empty($class_id) || empty($student_ids)){
+        $msg = "<div style='color:#ff3b3b;margin-bottom:1rem;'>Please select a class and at least one student!</div>";
     } else {
-        // Insert module
-        $stmt = $mysqli->prepare("INSERT INTO modules (module_name, professor_id) VALUES (?, ?)");
-        $stmt->bind_param("si", $name, $professor_id);
-        if($stmt->execute()){
-            $module_id = $stmt->insert_id;
-            
-            // Link to classes
-            $stmt2 = $mysqli->prepare("INSERT INTO module_classes (module_id, class_id) VALUES (?, ?)");
-            foreach($class_ids as $class_id){
-                $stmt2->bind_param("ii", $module_id, $class_id);
-                $stmt2->execute();
-            }
-            
-            $msg = "<div style='color:#00e676;margin-bottom:1rem;'>✅ Module created and assigned to selected classes!</div>";
-        } else {
-            $msg = "<div style='color:#ff3b3b;margin-bottom:1rem;'>Error adding module.</div>";
+        $stmt = $mysqli->prepare("INSERT INTO student_classes (student_id, class_id) VALUES (?, ?)");
+        foreach($student_ids as $student_id){
+            $stmt->bind_param("ii", $student_id, $class_id);
+            $stmt->execute();
         }
+        $msg = "<div style='color:#00e676;margin-bottom:1rem;'>✅ Students assigned to class!</div>";
     }
 }
 
-// Get data for dropdowns
-$professors = $mysqli->query("SELECT id, nom, prenom FROM users WHERE role='professor' ORDER BY nom");
+// Récupère les classes et les étudiants non-assignés
 $classes = $mysqli->query("SELECT id, class_name FROM classes ORDER BY class_name");
+$students = $mysqli->query("
+    SELECT id, nom, prenom 
+    FROM users 
+    WHERE role='student' 
+    AND id NOT IN (SELECT student_id FROM student_classes)
+    ORDER BY nom, prenom
+");
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<title>Add Module | macademia Faculty</title>
+<title>Assign Students | macademia Faculty</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 <style>
@@ -182,18 +177,18 @@ body {
     flex: 1; margin-left: 280px; padding: 2rem; transition: var(--transition);
 }
 .sidebar.collapsed ~ .main-content { margin-left: 0; }
-.container { max-width: 600px; margin: 0 auto; }
+.container { max-width: 800px; margin: 0 auto; }
 h2 { color: var(--primary); margin-bottom: 1.5rem; }
 .form-box {
     background: var(--bg-card); border: 1px solid var(--bg-card-border); border-radius: 20px;
     padding: 2rem; margin-bottom: 2rem;
 }
-.form-box select, .form-box .class-checkboxes {
+.form-box select, .form-box .student-checkboxes {
     width: 100%; padding: 0.75rem; margin-bottom: 1rem; border: 2px solid var(--bg-card-border);
     border-radius: 10px; background: #12172f; color: #f0f4f8;
 }
-.class-checkboxes { max-height: 150px; overflow-y: auto; background: #12172f; border: 2px solid var(--bg-card-border); border-radius: 10px; padding: 0.75rem; }
-.class-checkboxes label { display: block; margin-bottom: 0.5rem; color: var(--text-primary); }
+.student-checkboxes { max-height: 200px; overflow-y: auto; }
+.student-checkboxes label { display: block; margin-bottom: 0.5rem; }
 .btn-primary {
     background: linear-gradient(135deg, var(--primary), #7b2ff7); color: white;
     padding: 0.75rem 2rem; border: none; border-radius: 12px; font-weight: 700; cursor: pointer;
@@ -202,6 +197,13 @@ h2 { color: var(--primary); margin-bottom: 1.5rem; }
     background: rgba(255,255,255,0.1); color: var(--text-primary); padding: 0.5rem 1rem;
     border-radius: 8px; text-decoration: none; display: inline-block; margin-bottom: 1rem;
 }
+.class-list {
+    background: var(--bg-card); border: 1px solid var(--bg-card-border);
+    border-radius: 20px; padding: 1.5rem;
+}
+.class-item { padding: 1rem; border-bottom: 1px solid var(--bg-card-border); }
+.class-item:last-child { border-bottom: none; }
+.class-item strong { color: var(--primary); }
 </style>
 </head>
 <body>
@@ -264,9 +266,9 @@ h2 { color: var(--primary); margin-bottom: 1.5rem; }
             <li><a href="dashboard.php" class="sidebar-link"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
             <li><a href="adduser.php" class="sidebar-link"><i class="bi bi-person-plus"></i><span>Add User</span></a></li>
             <li><a href="userlist.php" class="sidebar-link"><i class="bi bi-people"></i><span>User List</span></a></li>
-            <li><a href="addmodule.php" class="sidebar-link active"><i class="bi bi-bookmark-plus"></i><span>Add Module</span></a></li>
+            <li><a href="addmodule.php" class="sidebar-link"><i class="bi bi-bookmark-plus"></i><span>Add Module</span></a></li>
             <li><a href="modulelist.php" class="sidebar-link"><i class="bi bi-bookshelf"></i><span>Module List</span></a></li>
-                    <li><a href="assign_students.php" class="sidebar-link"><i class="bi bi-person-check"></i><span>Assign Students</span></a></li>
+            <li><a href="assign_students.php" class="sidebar-link active"><i class="bi bi-person-check"></i><span>Assign Students</span></a></li>
             <li><a href="classes.php" class="sidebar-link"><i class="bi bi-collection"></i><span>Manage Classes</span></a></li>
             <li><a href="attendancerecord.php" class="sidebar-link"><i class="bi bi-clipboard-data"></i><span>Attendance</span></a></li>
             <li><a href="notif.php" class="sidebar-link"><i class="bi bi-bell"></i><span>Notifications</span></a></li>
@@ -278,31 +280,52 @@ h2 { color: var(--primary); margin-bottom: 1.5rem; }
     <main class="main-content">
         <div class="container">
             <a href="dashboard.php" class="btn-secondary">← Back to Dashboard</a>
-            <h2>Add New Module</h2>
+            <h2>Assign Students to Classes</h2>
             <?= $msg ?>
-            
+
+            <!-- Form -->
             <form method="POST" class="form-box">
-                <input type="text" name="module_name" placeholder="Module Name" required>
-                
-                <select name="professor_id" required>
-                    <option value="">Select Professor</option>
-                    <?php while($p = $professors->fetch_assoc()): ?>
-                    <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['nom'] . ' ' . $p['prenom']) ?></option>
+                <select name="class_id" required>
+                    <option value="">Select Class</option>
+                    <?php while($c = $classes->fetch_assoc()): ?>
+                    <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['class_name']) ?></option>
                     <?php endwhile; ?>
                 </select>
-                
-                <label style="color:var(--text-primary);margin-bottom:0.5rem;display:block;">Select Classes:</label>
-                <div class="class-checkboxes">
-                    <?php while($c = $classes->fetch_assoc()): ?>
+
+                <label style="color:var(--text-primary);margin-bottom:0.5rem;">Select Students (unassigned only):</label>
+                <div class="student-checkboxes">
+                    <?php while($s = $students->fetch_assoc()): ?>
                     <label>
-                        <input type="checkbox" name="class_ids[]" value="<?= $c['id'] ?>">
-                        <?= htmlspecialchars($c['class_name']) ?>
+                        <input type="checkbox" name="student_ids[]" value="<?= $s['id'] ?>">
+                        <?= htmlspecialchars($s['nom'] . ' ' . $s['prenom']) ?>
                     </label>
                     <?php endwhile; ?>
                 </div>
-                
-                <button type="submit" class="btn-primary">Create Module</button>
+
+                <button type="submit" class="btn-primary">Assign Students</button>
             </form>
+
+            <!-- Current Assignments -->
+            <div class="class-list">
+                <h3 style="color:var(--primary);margin-bottom:1rem;">Current Assignments</h3>
+                <?php
+                $assigned = $mysqli->query("
+                    SELECT c.class_name, u.nom, u.prenom 
+                    FROM student_classes sc
+                    JOIN classes c ON sc.class_id = c.id
+                    JOIN users u ON sc.student_id = u.id
+                    ORDER BY c.class_name, u.nom
+                ");
+                $current_class = "";
+                while($a = $assigned->fetch_assoc()){
+                    if($current_class != $a['class_name']){
+                        echo "<div class='class-item'><strong>".htmlspecialchars($a['class_name'])."</strong><br>";
+                        $current_class = $a['class_name'];
+                    }
+                    echo htmlspecialchars($a['nom'] . ' ' . $a['prenom']) . "<br>";
+                }
+                ?>
+            </div>
         </div>
     </main>
 </div>
@@ -331,5 +354,6 @@ document.addEventListener('click', (e) => {
     }
 });
 </script>
+
 </body>
 </html>

@@ -1,6 +1,6 @@
 <?php
 $host = 'localhost';
-$db   = 'gestion_absences';
+$db   = 'gestion-absences';
 $user = 'root';
 $pass = '';
 

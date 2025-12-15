@@ -18,43 +18,37 @@ $pending_requests = $mysqli->query("
 
 $msg = "";
 
-if($_SERVER["REQUEST_METHOD"] == "POST"){
-    $name = trim($_POST['module_name']);
-    $professor_id = (int)$_POST['professor_id'];
-    $class_ids = $_POST['class_ids'] ?? [];
-
-    if(empty($name) || empty($professor_id) || empty($class_ids)) {
-        $msg = "<div style='color:#ff3b3b;margin-bottom:1rem;'>All fields required (module, professor, at least one class)!</div>";
+// Ajouter une classe
+if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['class_name'])){
+    $name = trim($_POST['class_name']);
+    if(empty($name)){
+        $msg = "<div style='color:#ff3b3b;margin-bottom:1rem;'>Class name required!</div>";
     } else {
-        // Insert module
-        $stmt = $mysqli->prepare("INSERT INTO modules (module_name, professor_id) VALUES (?, ?)");
-        $stmt->bind_param("si", $name, $professor_id);
+        $stmt = $mysqli->prepare("INSERT INTO classes (class_name) VALUES (?)");
+        $stmt->bind_param("s", $name);
         if($stmt->execute()){
-            $module_id = $stmt->insert_id;
-            
-            // Link to classes
-            $stmt2 = $mysqli->prepare("INSERT INTO module_classes (module_id, class_id) VALUES (?, ?)");
-            foreach($class_ids as $class_id){
-                $stmt2->bind_param("ii", $module_id, $class_id);
-                $stmt2->execute();
-            }
-            
-            $msg = "<div style='color:#00e676;margin-bottom:1rem;'>✅ Module created and assigned to selected classes!</div>";
-        } else {
-            $msg = "<div style='color:#ff3b3b;margin-bottom:1rem;'>Error adding module.</div>";
+            $msg = "<div style='color:#00e676;margin-bottom:1rem;'>✅ Class created!</div>";
         }
     }
 }
 
-// Get data for dropdowns
-$professors = $mysqli->query("SELECT id, nom, prenom FROM users WHERE role='professor' ORDER BY nom");
-$classes = $mysqli->query("SELECT id, class_name FROM classes ORDER BY class_name");
+// Supprimer une classe
+if(isset($_GET['delete_class'])){
+    $id = (int)$_GET['delete_class'];
+    $stmt = $mysqli->prepare("DELETE FROM classes WHERE id=?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    header("Location: classes.php");
+    exit();
+}
+
+$classes = $mysqli->query("SELECT * FROM classes ORDER BY class_name");
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<title>Add Module | macademia Faculty</title>
+<title>Manage Classes | macademia Faculty</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 <style>
@@ -182,26 +176,31 @@ body {
     flex: 1; margin-left: 280px; padding: 2rem; transition: var(--transition);
 }
 .sidebar.collapsed ~ .main-content { margin-left: 0; }
-.container { max-width: 600px; margin: 0 auto; }
+.container { max-width: 1000px; margin: 0 auto; }
 h2 { color: var(--primary); margin-bottom: 1.5rem; }
 .form-box {
-    background: var(--bg-card); border: 1px solid var(--bg-card-border); border-radius: 20px;
-    padding: 2rem; margin-bottom: 2rem;
+    max-width: 500px; background: var(--bg-card); border: 1px solid var(--bg-card-border);
+    border-radius: 20px; padding: 2rem; margin-bottom: 2rem;
 }
-.form-box select, .form-box .class-checkboxes {
+.form-box input {
     width: 100%; padding: 0.75rem; margin-bottom: 1rem; border: 2px solid var(--bg-card-border);
     border-radius: 10px; background: #12172f; color: #f0f4f8;
 }
-.class-checkboxes { max-height: 150px; overflow-y: auto; background: #12172f; border: 2px solid var(--bg-card-border); border-radius: 10px; padding: 0.75rem; }
-.class-checkboxes label { display: block; margin-bottom: 0.5rem; color: var(--text-primary); }
 .btn-primary {
     background: linear-gradient(135deg, var(--primary), #7b2ff7); color: white;
     padding: 0.75rem 2rem; border: none; border-radius: 12px; font-weight: 700; cursor: pointer;
 }
-.btn-secondary {
-    background: rgba(255,255,255,0.1); color: var(--text-primary); padding: 0.5rem 1rem;
-    border-radius: 8px; text-decoration: none; display: inline-block; margin-bottom: 1rem;
+.btn-danger {
+    background: linear-gradient(135deg, var(--error), #f72b7b); color: white;
+    padding: 0.4rem 1rem; border-radius: 8px; text-decoration: none; font-size: 0.875rem;
 }
+table {
+    width: 100%; border-collapse: collapse; background: var(--bg-card);
+    border: 1px solid var(--bg-card-border); border-radius: 20px; overflow: hidden;
+}
+th, td { padding: 1rem; border-bottom: 1px solid var(--bg-card-border); }
+th { color: var(--primary); background: rgba(255, 255, 255, 0.06); }
+@keyframes pulseBadge { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
 </style>
 </head>
 <body>
@@ -264,10 +263,10 @@ h2 { color: var(--primary); margin-bottom: 1.5rem; }
             <li><a href="dashboard.php" class="sidebar-link"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
             <li><a href="adduser.php" class="sidebar-link"><i class="bi bi-person-plus"></i><span>Add User</span></a></li>
             <li><a href="userlist.php" class="sidebar-link"><i class="bi bi-people"></i><span>User List</span></a></li>
-            <li><a href="addmodule.php" class="sidebar-link active"><i class="bi bi-bookmark-plus"></i><span>Add Module</span></a></li>
+            <li><a href="addmodule.php" class="sidebar-link"><i class="bi bi-bookmark-plus"></i><span>Add Module</span></a></li>
             <li><a href="modulelist.php" class="sidebar-link"><i class="bi bi-bookshelf"></i><span>Module List</span></a></li>
-                    <li><a href="assign_students.php" class="sidebar-link"><i class="bi bi-person-check"></i><span>Assign Students</span></a></li>
-            <li><a href="classes.php" class="sidebar-link"><i class="bi bi-collection"></i><span>Manage Classes</span></a></li>
+            <li><a href="assign_students.php" class="sidebar-link"><i class="bi bi-person-check"></i><span>Assign Students</span></a></li>
+            <li><a href="classes.php" class="sidebar-link active"><i class="bi bi-collection"></i><span>Manage Classes</span></a></li>
             <li><a href="attendancerecord.php" class="sidebar-link"><i class="bi bi-clipboard-data"></i><span>Attendance</span></a></li>
             <li><a href="notif.php" class="sidebar-link"><i class="bi bi-bell"></i><span>Notifications</span></a></li>
             <li><a href="logout.php" class="sidebar-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a></li>
@@ -277,32 +276,36 @@ h2 { color: var(--primary); margin-bottom: 1.5rem; }
     <!-- === MAIN CONTENT === -->
     <main class="main-content">
         <div class="container">
-            <a href="dashboard.php" class="btn-secondary">← Back to Dashboard</a>
-            <h2>Add New Module</h2>
+            <h2>Manage Classes</h2>
             <?= $msg ?>
             
+            <!-- Add Class Form -->
             <form method="POST" class="form-box">
-                <input type="text" name="module_name" placeholder="Module Name" required>
-                
-                <select name="professor_id" required>
-                    <option value="">Select Professor</option>
-                    <?php while($p = $professors->fetch_assoc()): ?>
-                    <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['nom'] . ' ' . $p['prenom']) ?></option>
-                    <?php endwhile; ?>
-                </select>
-                
-                <label style="color:var(--text-primary);margin-bottom:0.5rem;display:block;">Select Classes:</label>
-                <div class="class-checkboxes">
-                    <?php while($c = $classes->fetch_assoc()): ?>
-                    <label>
-                        <input type="checkbox" name="class_ids[]" value="<?= $c['id'] ?>">
-                        <?= htmlspecialchars($c['class_name']) ?>
-                    </label>
-                    <?php endwhile; ?>
-                </div>
-                
-                <button type="submit" class="btn-primary">Create Module</button>
+                <input type="text" name="class_name" placeholder="Class Name (e.g., First Year CS)" required>
+                <button type="submit" class="btn-primary">Create Class</button>
             </form>
+
+            <!-- Classes List -->
+            <table>
+                <thead>
+                    <tr>
+                        <th>Class Name</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while ($c = $classes->fetch_assoc()): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($c['class_name']) ?></td>
+                        <td>
+                            <a href="?delete_class=<?= $c['id'] ?>" class="btn-danger" onclick="return confirm('Delete this class?')">
+                                <i class="bi bi-trash"></i> Delete
+                            </a>
+                        </td>
+                    </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
         </div>
     </main>
 </div>
@@ -331,5 +334,6 @@ document.addEventListener('click', (e) => {
     }
 });
 </script>
+
 </body>
 </html>

@@ -1,8 +1,15 @@
 <?php
-// Bootstrap loads config and starts session; view is presentation-only.
+// Ensure bootstrap is loaded when this view is accessed directly or via controller.
+if (!defined('BASE_PATH')) {
+    require_once __DIR__ . '/../../../bootstrap.php';
+}
 
+// Make DB connection available
+global $mysqli;
+
+// Access control: only students
 if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'student'){
-    header("Location: " . PUBLIC_URL . "/index.php/login/login");
+    header("Location: " . BASE_URL . "/login/login");
     exit();
 }
 
@@ -18,60 +25,57 @@ $stats = $mysqli->query("
          INNER JOIN attendance a ON m.id = a.module_id 
          WHERE a.student_id = $student_id 
          AND DAYOFWEEK(CURDATE()) = DAYOFWEEK(a.date)) as today_classes
-<?php
-// Ensure bootstrap is loaded when this view is accessed directly or via controller.
-if (!defined('BASE_PATH')) {
-    require_once __DIR__ . '/../../../bootstrap.php';
-}
-
-// Make DB connection available
-global $mysqli;
-
-// Access control: only students
-if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'student'){
-    header("Location: " . PUBLIC_URL . "/index.php/login/login");
-    exit();
-}
-
-$student_id = $_SESSION['user_id'];
-
-// Student stats
-$stats = $mysqli->query(""
-    SELECT 
-        (SELECT COUNT(DISTINCT a.module_id) FROM attendance a WHERE a.student_id = $student_id) as total_modules,
-        (SELECT COUNT(*) FROM attendance WHERE student_id = $student_id AND status = 'absent') as total_absences,
-        (SELECT COUNT(*) FROM attendance WHERE student_id = $student_id) as total_classes,
-        (SELECT COUNT(*) FROM modules m 
-         INNER JOIN attendance a ON m.id = a.module_id 
-         WHERE a.student_id = $student_id 
-         AND DAYOFWEEK(CURDATE()) = DAYOFWEEK(a.date)) as today_classes
-""")->fetch_assoc();
+")->fetch_assoc();
 
 // Calculate attendance rate
 $attendance_rate = $stats['total_classes'] > 0 
     ? round((($stats['total_classes'] - $stats['total_absences']) / $stats['total_classes']) * 100, 1) 
     : 0;
 
-// Recent attendance
-$recent_attendance = $mysqli->query(""
-    SELECT m.module_name, a.date, a.status
-    FROM attendance a
-    JOIN modules m ON a.module_id = m.id
-    WHERE a.student_id = $student_id
-    ORDER BY a.date DESC
-    LIMIT 10
-
+// My Modules
+$my_modules = $mysqli->query("
+    SELECT m.module_name, u.prenom as prof_prenom, u.nom as prof_nom, ms.day as schedule_day, ms.start_time as schedule_time
+    FROM modules m
+    JOIN users u ON m.professor_id = u.id
+    LEFT JOIN module_schedule ms ON m.id = ms.module_id
+    WHERE m.id IN (SELECT DISTINCT module_id FROM attendance WHERE student_id = $student_id)
 ");
 
-// Enrolled modules with professors
-// My Modules - Fixed without enrollment table
-
+// Schedule
+$schedule = $mysqli->query("
+    SELECT m.module_name, ms.day as schedule_day, ms.start_time as schedule_time
+    FROM modules m
+    JOIN module_schedule ms ON m.id = ms.module_id
+    WHERE m.id IN (SELECT DISTINCT module_id FROM attendance WHERE student_id = $student_id)
+    ORDER BY ms.day, ms.start_time
+");
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <title>Student Dashboard | macademia Faculty</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+:root {
+    --primary: #00f5ff;
+    --primary-glow: rgba(0, 245, 255, 0.5);
+    --secondary: #7b2ff7;
+    --accent: #f72b7b;
+    --bg-main: linear-gradient(135deg, #0a0e27 0%, #12172f 50%, #1a1f3a 100%);
+    --bg-panel: rgba(10, 14, 39, 0.7);
+    --bg-card: rgba(255, 255, 255, 0.04);
+    --bg-card-border: rgba(255, 255, 255, 0.08);
+    --text-primary: #f0f4f8;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --error: #ff3b3b;
+    --success: #00e676;
+    --warning: #ffa500;
+    --shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.85);
+    --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    --glass-blur: blur(24px) saturate(200%);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -93,7 +97,6 @@ body {
     50% { background-position: 100% 50%; }
 }
 
-/* === FIXED NAVBAR === */
 .navbar {
     position: fixed;
     top: 0;
@@ -127,9 +130,7 @@ body {
     transition: var(--transition);
 }
 
-.sidebar-toggle:hover {
-    background: rgba(255, 255, 255, 0.05);
-}
+.sidebar-toggle:hover { background: rgba(255, 255, 255, 0.05); }
 
 .logo {
     display: flex;
@@ -188,14 +189,12 @@ body {
     font-weight: 700;
 }
 
-/* === MAIN LAYOUT === */
 .dashboard-wrapper {
     display: flex;
     min-height: 100vh;
     margin-top: 70px;
 }
 
-/* === SIDEBAR === */
 .sidebar {
     width: 280px;
     background: var(--bg-panel);
@@ -210,17 +209,9 @@ body {
     z-index: 999;
 }
 
-.sidebar.collapsed {
-    transform: translateX(-100%);
-}
+.sidebar.collapsed { transform: translateX(-100%); }
 
-.sidebar-menu {
-    list-style: none;
-}
-
-.sidebar-item {
-    margin-bottom: 0.25rem;
-}
+.sidebar-menu { list-style: none; }
 
 .sidebar-link {
     display: flex;
@@ -249,7 +240,6 @@ body {
     text-align: center;
 }
 
-/* === MAIN CONTENT === */
 .main-content {
     flex: 1;
     margin-left: 280px;
@@ -259,11 +249,8 @@ body {
     gap: 2rem;
 }
 
-.sidebar.collapsed ~ .main-content {
-    margin-left: 0;
-}
+.sidebar.collapsed ~ .main-content { margin-left: 0; }
 
-/* === CHATBOT PLACEHOLDER (CENTRAL) === */
 .chatbot-container {
     flex: 1;
     display: flex;
@@ -327,7 +314,6 @@ body {
     padding: 0 2rem;
 }
 
-/* === INFO PANEL (RIGHT SIDE) === */
 .info-panel {
     width: 350px;
     flex-shrink: 0;
@@ -358,9 +344,7 @@ body {
     border-bottom: 1px solid var(--bg-card-border);
 }
 
-.stat-row:last-child {
-    border-bottom: none;
-}
+.stat-row:last-child { border-bottom: none; }
 
 .stat-label {
     color: var(--text-secondary);
@@ -372,19 +356,10 @@ body {
     color: var(--text-primary);
 }
 
-.stat-value.high {
-    color: var(--success);
-}
+.stat-value.high { color: var(--success); }
+.stat-value.medium { color: var(--warning); }
+.stat-value.low { color: var(--error); }
 
-.stat-value.medium {
-    color: var(--warning);
-}
-
-.stat-value.low {
-    color: var(--error);
-}
-
-/* Module list */
 .module-item {
     padding: 0.75rem;
     background: rgba(255, 255, 255, 0.02);
@@ -410,7 +385,6 @@ body {
     color: var(--text-muted);
 }
 
-/* Schedule list */
 .schedule-item {
     padding: 0.75rem;
     border-left: 3px solid var(--primary);
@@ -430,18 +404,8 @@ body {
     font-size: 0.85rem;
 }
 
-/* === ANIMATIONS === */
-@keyframes pulseBadge {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.2); }
-}
-
-/* === RESPONSIVE === */
 @media (max-width: 768px) {
-    .navbar {
-        padding: 0 1rem;
-    }
-    
+    .navbar { padding: 0 1rem; }
     .sidebar {
         position: fixed;
         bottom: 0;
@@ -454,56 +418,39 @@ body {
         border-right: none;
         padding: 0.5rem 0;
     }
-    
-    .sidebar.collapsed {
-        transform: translateY(100%);
-    }
-    
+    .sidebar.collapsed { transform: translateY(100%); }
     .sidebar-menu {
         display: flex;
         overflow-x: auto;
         padding: 0 1rem;
         justify-content: space-around;
     }
-    
     .sidebar-link {
         flex-direction: column;
         padding: 0.5rem;
         font-size: 0.7rem;
         min-width: 70px;
     }
-    
-    .sidebar-link span {
-        display: none;
-    }
-    
+    .sidebar-link span { display: none; }
     .main-content {
         margin-left: 0;
         padding: 1rem;
         padding-bottom: 100px;
         flex-direction: column;
     }
-    
-    .info-panel {
-        width: 100%;
-        order: -1;
-    }
-    
-    .chatbot-placeholder {
-        height: 400px;
-    }
+    .info-panel { width: 100%; order: -1; }
+    .chatbot-placeholder { height: 400px; }
 }
 </style>
 </head>
 <body>
 
-<!-- === NAVBAR === -->
 <nav class="navbar">
     <div class="navbar-left">
         <button class="sidebar-toggle" id="sidebarToggle">
             <i class="bi bi-list"></i>
         </button>
-        <a href="student_dashboard.php" class="logo">
+        <a href="<?= BASE_URL ?>/studdash/dashstud" class="logo">
             <div class="logo-icon"><i class="bi bi-mortarboard-fill"></i></div>
             <h1>macademia Faculty</h1>
         </a>
@@ -517,37 +464,29 @@ body {
     </div>
 </nav>
 
-<!-- === WRAPPER === -->
 <div class="dashboard-wrapper">
-    <!-- === SIDEBAR === -->
     <aside class="sidebar" id="sidebar">
         <ul class="sidebar-menu">
-            <li><a href="student_dashboard.php" class="sidebar-link active"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
-            <li><a href="my_attendance.php" class="sidebar-link"><i class="bi bi-calendar-check"></i><span>My Attendance</span></a></li>
-            <li><a href="my_modules.php" class="sidebar-link"><i class="bi bi-bookshelf"></i><span>My Modules</span></a></li>
-            <li><a href="my_absences.php" class="sidebar-link"><i class="bi bi-exclamation-circle"></i><span>My Absences</span></a></li>
-            <li><a href="chatbot.php" class="sidebar-link"><i class="bi bi-robot"></i><span>AI Assistant</span></a></li>
-            <li><a href="profile.php" class="sidebar-link"><i class="bi bi-person-circle"></i><span>My Profile</span></a></li>
-            <li><a href="logout.php" class="sidebar-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a></li>
+            <li><a href="<?= BASE_URL ?>/studdash/dashstud" class="sidebar-link active"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
+            <li><a href="<?= BASE_URL ?>/studdash/dashstud" class="sidebar-link"><i class="bi bi-calendar-check"></i><span>My Attendance</span></a></li>
+            <li><a href="<?= BASE_URL ?>/studdash/dashstud" class="sidebar-link"><i class="bi bi-bookshelf"></i><span>My Modules</span></a></li>
+            <li><a href="<?= BASE_URL ?>/studdash/dashstud" class="sidebar-link"><i class="bi bi-exclamation-circle"></i><span>My Absences</span></a></li>
+            <li><a href="<?= BASE_URL ?>/login/logout" class="sidebar-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a></li>
         </ul>
     </aside>
 
-    <!-- === MAIN CONTENT === -->
     <main class="main-content">
-        <!-- Chatbot Placeholder (Center) -->
         <div class="chatbot-container">
             <div class="chatbot-placeholder">
                 <div class="chatbot-icon">
                     <i class="bi bi-robot"></i>
                 </div>
-                <h2>AI Assistant</h2>
-                <p>Chatbot functionality coming soon.<br>Ask me about your attendance, modules, or schedule!</p>
+                <h2>Welcome to Your Dashboard</h2>
+                <p>View your attendance, modules, and schedule information.</p>
             </div>
         </div>
 
-        <!-- Info Panel (Right Side) -->
         <div class="info-panel">
-            <!-- Attendance Stats -->
             <div class="info-card">
                 <h3>Attendance Summary</h3>
                 <div class="stat-row">
@@ -570,24 +509,25 @@ body {
                 </div>
             </div>
 
-            <!-- My Modules -->
             <div class="info-card">
                 <h3>My Modules</h3>
-                <?php while($mod = $my_modules->fetch_assoc()): ?>
-                <div class="module-item">
-                    <div class="module-name"><?php echo htmlspecialchars($mod['module_name']); ?></div>
-                    <div class="module-details">
-                        <?php echo htmlspecialchars($mod['prof_prenom'] . ' ' . $mod['prof_nom']); ?> • 
-                        <?php echo $mod['schedule_day'] . ' ' . $mod['schedule_time']; ?>
+                <?php if($my_modules && $my_modules->num_rows > 0): ?>
+                    <?php while($mod = $my_modules->fetch_assoc()): ?>
+                    <div class="module-item">
+                        <div class="module-name"><?php echo htmlspecialchars($mod['module_name']); ?></div>
+                        <div class="module-details">
+                            <?php echo htmlspecialchars($mod['prof_prenom'] . ' ' . $mod['prof_nom']); ?>
+                        </div>
                     </div>
-                </div>
-                <?php endwhile; ?>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">No modules enrolled</p>
+                <?php endif; ?>
             </div>
 
-            <!-- Upcoming Schedule -->
             <div class="info-card">
                 <h3>This Week's Schedule</h3>
-                <?php if($schedule->num_rows > 0): ?>
+                <?php if($schedule && $schedule->num_rows > 0): ?>
                     <?php while($sch = $schedule->fetch_assoc()): ?>
                     <div class="schedule-item">
                         <div class="schedule-time"><?php echo $sch['schedule_day'] . ' ' . $sch['schedule_time']; ?></div>
@@ -603,23 +543,13 @@ body {
 </div>
 
 <script>
-// === SIDEBAR TOGGLE ===
 const sidebarToggle = document.getElementById('sidebarToggle');
 const sidebar = document.getElementById('sidebar');
 
 sidebarToggle.addEventListener('click', () => {
     sidebar.classList.toggle('collapsed');
 });
-
-// === PULSE ANIMATION FOR CHATBOT ICON ===
-function pulseChatbotIcon() {
-    const icon = document.querySelector('.chatbot-icon');
-    icon.style.transform = 'scale(1.1)';
-    setTimeout(() => {
-        icon.style.transform = 'scale(1)';
-    }, 500);
-}
-setInterval(pulseChatbotIcon, 3000);
 </script>
+
 </body>
 </html>

@@ -1,10 +1,17 @@
 <?php
-// Bootstrap loads config and starts session; view is presentation-only.
+// Ensure bootstrap is loaded when this view is accessed directly or via controller.
+if (!defined('BASE_PATH')) {
+    require_once __DIR__ . '/../../../bootstrap.php';
+}
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 require 'PHPMailer/src/Exception.php';
 require 'PHPMailer/src/PHPMailer.php';
 require 'PHPMailer/src/SMTP.php';
+
+// expose DB connection to this view
+global $mysqli;
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'professor') {
     header("Location: " . PUBLIC_URL . "/index.php/login/login");

@@ -1,5 +1,8 @@
 <?php
 // Bootstrap loads config and starts session; view remains presentation-only.
+if (!defined('BASE_PATH')) {
+    require_once __DIR__ . '/../../../bootstrap.php';
+}
 
 function ip_in_subnet($ip, $subnet, $mask) {
     $ip = ip2long($ip);

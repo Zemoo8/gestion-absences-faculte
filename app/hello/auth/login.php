@@ -15,6 +15,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Authentication handled in `AuthController::login()`; controller supplies `$error`.
+// Ensure `$error` exists when this view is rendered directly
+if (!isset($error)) {
+    $error = '';
+}
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
@@ -771,7 +775,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         <?php endif; ?>
 
-        <form method="POST" id="loginForm" novalidate>
+        <form method="POST" id="loginForm" novalidate action="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/login/login">
             <div class="form-group">
                 <input type="email" id="email" name="email" class="form-control" placeholder=" " required autocomplete="email">
                 <label for="email" class="form-label">Email Address</label>
@@ -792,7 +796,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="checkbox" name="remember" id="remember">
                     <span>Remember me</span>
                 </label>
-                    <a href="forgot_password.php" class="forgot-link">Forgot password?</a>
+                    <a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/login/forgotPassword" class="forgot-link">Forgot password?</a>
             </div>
 
             <button type="submit" class="btn-login">
@@ -802,9 +806,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
 
         <div class="login-footer">
-            <p>Don't have an account? <a href="requestacc.php">Request Access</a></p>
+            <p>Don't have an account? <a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/login/requestAccount">Request Access</a></p>
 
-            <p><a href="index.php">← Back to Home</a></p>
+            <p><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/">← Back to Home</a></p>
         </div>
     </div>
 </div>

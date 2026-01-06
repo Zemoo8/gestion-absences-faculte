@@ -1,10 +1,18 @@
+
 <?php
-// Config loaded by bootstrap; view remains presentation-only.
+// Ensure bootstrap is loaded when this view is accessed directly or via controller.
+if (!defined('BASE_PATH')) {
+    require_once __DIR__ . '/../../../bootstrap.php';
+}
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 require 'PHPMailer/src/Exception.php';
 require 'PHPMailer/src/PHPMailer.php';
 require 'PHPMailer/src/SMTP.php';
+
+// expose DB connection
+global $mysqli;
 
 $message = '';
 
@@ -681,7 +689,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="container">
     <div class="info-panel">
         <div class="info-header">
-            <a href="index.php" class="logo">
+            <a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/" class="logo">
                 <div class="logo-icon">
                     <i class="bi bi-mortarboard-fill"></i>
                 </div>
@@ -751,9 +759,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="alert alert-success" role="alert">
                 <i class="bi bi-send-check"></i> <strong>Reset link sent!</strong> Check your email (including spam/junk) for the password reset link.
             </div>
-            <script>
+                <script>
                 setTimeout(() => {
-                    window.location.href = 'login.php';
+                    window.location.href = '<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/login/login';
                 }, 4000);
             </script>
             <?php elseif($message): ?>

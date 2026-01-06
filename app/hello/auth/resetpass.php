@@ -1,10 +1,17 @@
 <?php
-// Config loaded by bootstrap; view remains presentation-only.
+// Ensure bootstrap is loaded when this view is accessed directly or via controller.
+if (!defined('BASE_PATH')) {
+    require_once __DIR__ . '/../../../bootstrap.php';
+}
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 require 'PHPMailer/src/Exception.php';
 require 'PHPMailer/src/PHPMailer.php';
 require 'PHPMailer/src/SMTP.php';
+
+// expose DB connection
+global $mysqli;
 
 $message = '';
 $show_form = false;

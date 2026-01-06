@@ -1,5 +1,11 @@
 <?php
-// Bootstrap loads config and starts session; view remains presentation-only.
+// Ensure bootstrap is loaded when this view is accessed directly or via controller.
+if (!defined('BASE_PATH')) {
+    require_once __DIR__ . '/../../../bootstrap.php';
+}
+
+// Make DB connection available
+global $mysqli;
 
 if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin'){
     header("Location: " . PUBLIC_URL . "/index.php/login/login");
@@ -403,7 +409,7 @@ h2 { color: var(--primary); margin-bottom: 1.5rem; }
         <button class="sidebar-toggle" id="sidebarToggle">
             <i class="bi bi-list"></i>
         </button>
-        <a href="dashboard.php" class="logo">
+        <a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/dashboard" class="logo">
             <div class="logo-icon"><i class="bi bi-mortarboard-fill"></i></div>
             <h1>macademia Faculty</h1>
         </a>
@@ -422,7 +428,7 @@ h2 { color: var(--primary); margin-bottom: 1.5rem; }
                 <?php if($pending_requests->num_rows > 0): ?>
                     <div class="dropdown-header">
                         <strong>Account Requests</strong>
-                        <a href="adduser.php" class="btn-small">+ Add User</a>
+                        <a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/addUser" class="btn-small">+ Add User</a>
                     </div>
                     <?php while($req = $pending_requests->fetch_assoc()): ?>
                     <div class="notification-item">
@@ -431,7 +437,7 @@ h2 { color: var(--primary); margin-bottom: 1.5rem; }
                             <p><?php echo htmlspecialchars($req['email']); ?></p>
                             <small><?php echo date('M d, H:i', strtotime($req['created_at'])); ?></small>
                         </div>
-                        <a href="adduser.php?email=<?php echo urlencode($req['email']); ?>" class="btn-approve">Approve</a>
+                        <a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/addUser?email=<?php echo urlencode($req['email']); ?>" class="btn-approve">Approve</a>
                     </div>
                     <?php endwhile; ?>
                 <?php else: ?>
@@ -452,16 +458,16 @@ h2 { color: var(--primary); margin-bottom: 1.5rem; }
     <!-- === SIDEBAR === -->
     <aside class="sidebar" id="sidebar">
         <ul class="sidebar-menu">
-            <li><a href="dashboard.php" class="sidebar-link"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
-            <li><a href="adduser.php" class="sidebar-link"><i class="bi bi-person-plus"></i><span>Add User</span></a></li>
-            <li><a href="userlist.php" class="sidebar-link"><i class="bi bi-people"></i><span>User List</span></a></li>
-            <li><a href="addmodule.php" class="sidebar-link active"><i class="bi bi-bookmark-plus"></i><span>Add Module</span></a></li>
-            <li><a href="modulelist.php" class="sidebar-link"><i class="bi bi-bookshelf"></i><span>Module List</span></a></li>
-                    <li><a href="assign_students.php" class="sidebar-link"><i class="bi bi-person-check"></i><span>Assign Students</span></a></li>
-            <li><a href="classes.php" class="sidebar-link"><i class="bi bi-collection"></i><span>Manage Classes</span></a></li>
-            <li><a href="attendancerecord.php" class="sidebar-link"><i class="bi bi-clipboard-data"></i><span>Attendance</span></a></li>
-            <li><a href="notif.php" class="sidebar-link"><i class="bi bi-bell"></i><span>Notifications</span></a></li>
-            <li><a href="logout.php" class="sidebar-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a></li>
+                <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/dashboard" class="sidebar-link"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
+                <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/addUser" class="sidebar-link"><i class="bi bi-person-plus"></i><span>Add User</span></a></li>
+                <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/userList" class="sidebar-link"><i class="bi bi-people"></i><span>User List</span></a></li>
+                <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/addModule" class="sidebar-link active"><i class="bi bi-bookmark-plus"></i><span>Add Module</span></a></li>
+                <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/moduleList" class="sidebar-link"><i class="bi bi-bookshelf"></i><span>Module List</span></a></li>
+                    <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/assignStudents" class="sidebar-link"><i class="bi bi-person-check"></i><span>Assign Students</span></a></li>
+                <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/classes" class="sidebar-link"><i class="bi bi-collection"></i><span>Manage Classes</span></a></li>
+                <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/attendanceRecord" class="sidebar-link"><i class="bi bi-clipboard-data"></i><span>Attendance</span></a></li>
+                <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/notifications" class="sidebar-link"><i class="bi bi-bell"></i><span>Notifications</span></a></li>
+                <li><a href="<?php echo PUBLIC_URL; ?>/index.php/login/logout" class="sidebar-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a></li>
         </ul>
     </aside>
 
@@ -470,7 +476,7 @@ h2 { color: var(--primary); margin-bottom: 1.5rem; }
         <div class="container">
             <!-- Enhanced Page Header -->
             <div class="page-header">
-                <a href="dashboard.php" class="btn-secondary">
+                <a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/dashboard" class="btn-secondary">
                     <i class="bi bi-arrow-left"></i> Back to Dashboard
                 </a>
                 <div class="page-title">

@@ -33,7 +33,7 @@ if ($path_info === '/') $path_info = '/';
 try {
     switch(true) {
         // Admin routes -> AdminController
-        case strpos($path_info, '/admindash/') === 0:
+        case strpos($path_info, '/admindash') === 0:
             require_once CONTROLLERS_PATH . '/AdminController.php';
             $controller = new AdminController();
             $action = trim(str_replace('/admindash/', '', $path_info), '/');
@@ -52,7 +52,7 @@ try {
             break;
             
         // Professor routes -> ProfessorController
-        case strpos($path_info, '/profdash/') === 0:    
+        case strpos($path_info, '/profdash') === 0:    
             require_once CONTROLLERS_PATH . '/ProfessorController.php';
             $controller = new ProfessorController();
             $action = trim(str_replace('/profdash/', '', $path_info), '/');
@@ -71,7 +71,7 @@ try {
             break;
             
         // Student routes -> StudentController
-        case strpos($path_info, '/studdash/') === 0:
+        case strpos($path_info, '/studdash') === 0:
             require_once CONTROLLERS_PATH . '/StudentController.php';
             $controller = new StudentController();
             $action = trim(str_replace('/studdash/', '', $path_info), '/');
@@ -90,7 +90,7 @@ try {
             break;
             
         // Auth routes - dispatch to AuthController for login/logout/etc.
-        case strpos($path_info, '/login/') === 0:
+        case strpos($path_info, '/login') === 0:
             require_once CONTROLLERS_PATH . '/AuthController.php';
             $controller = new AuthController();
             $view = trim(str_replace('/login/', '', $path_info), '/');

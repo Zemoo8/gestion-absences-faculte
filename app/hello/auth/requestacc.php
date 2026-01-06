@@ -1,5 +1,8 @@
 <?php
-// Bootstrap loads config and starts session; view remains presentation-only.
+// Ensure bootstrap is loaded when this view is accessed directly (preserve DB and config).
+if (!defined('BASE_PATH')) {
+    require_once __DIR__ . '/../../../bootstrap.php';
+}
 
 // PHPMailer files
 use PHPMailer\PHPMailer\PHPMailer;
@@ -53,13 +56,14 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
 
                     $mail->isHTML(true);
                     $mail->Subject = 'New Faculty Account Request';
+                    $admin_link = (defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost') . '/index.php/admindash';
                     $mail->Body = "
                         <h2>New Account Request</h2>
                         <p><strong>Name:</strong> " . htmlspecialchars($nom) . " " . htmlspecialchars($prenom) . "</p>
                         <p><strong>Email:</strong> " . htmlspecialchars($email) . "</p>
                         <p><strong>Submitted:</strong> " . date('Y-m-d H:i:s') . "</p>
                         <hr>
-                        <p><a href='C:\xampp\htdocs\projet\Gestion-absences\admindash\userlist.php'>Create his account</a></p>
+                        <p><a href='" . $admin_link . "'>Create his account</a></p>
                     ";
                     
                     $mail->send();
@@ -649,7 +653,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
 <div class="container">
     <div class="info-panel">
         <div class="info-header">
-            <a href="index.php" class="logo">
+            <a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/" class="logo">
                 <div class="logo-icon">
                     <i class="bi bi-mortarboard-fill"></i>
                 </div>
@@ -703,7 +707,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
 
         <div class="contact-info">
-            <p><i class="bi bi-info-circle"></i> Already have an account? <a href="login.php">Sign in here</a></p>
+            <p><i class="bi bi-info-circle"></i> Already have an account? <a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/login/login">Sign in here</a></p>
         </div>
     </div>
 
@@ -759,7 +763,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="form-footer">
                 <p>Your request will be reviewed by our admin team</p>
 
-                <p><a href="login.php"><i class="bi bi-arrow-left"></i> Back to Login</a></p>
+                <p><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/login/login"><i class="bi bi-arrow-left"></i> Back to Login</a></p>
             </div>
         </div>
     </div>
@@ -831,7 +835,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         });
     });
-</script>
-
-</body>
-</html>
+                <script>
+                setTimeout(() => {
+                    window.location.href = '<?php echo defined("PUBLIC_URL") ? PUBLIC_URL : "http://localhost"; ?>/index.php/';
+                }, 3000);
+            </script>

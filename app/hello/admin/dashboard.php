@@ -1,4 +1,12 @@
 <?php
+// Ensure bootstrap is loaded when this view is accessed directly or via controller.
+if (!defined('BASE_PATH')) {
+    require_once __DIR__ . '/../../../bootstrap.php';
+}
+
+// expose DB connection to this view
+global $mysqli;
+
 // Bootstrap loads config and starts session; view remains presentation-only.
 
 if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin'){
@@ -817,7 +825,7 @@ body {
             <div class="content-card">
                 <div class="content-header">
                     <h3>Active Modules (Today's Attendance)</h3>
-                    <a href="modulelist.php" class="btn-primary">Manage Modules</a>
+                    <a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/moduleList" class="btn-primary">Manage Modules</a>
                 </div>
                 <div class="module-grid">
                     <?php while($mod = $modules->fetch_assoc()): ?>
@@ -839,7 +847,7 @@ body {
             <div class="content-card">
                 <div class="content-header">
                     <h3>Recent Attendance Activity</h3>
-                    <a href="attendancerecord.php" class="btn-primary">View Full Report</a>
+                    <a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/attendanceRecord" class="btn-primary">View Full Report</a>
                 </div>
                 <table class="data-table">
                     <thead>

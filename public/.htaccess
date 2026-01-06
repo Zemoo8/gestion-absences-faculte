@@ -1,3 +1,21 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Adjust this RewriteBase if your project is served from a different subfolder
+    RewriteBase /projet/Gestion-absences/public/
+
+    # If the request is for an existing file or directory, serve it directly
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Otherwise rewrite everything to index.php (front controller)
+    RewriteRule ^ index.php [L,QSA]
+</IfModule>
+
+# Fallback for servers without mod_rewrite
+<IfModule !mod_rewrite.c>
+    ErrorDocument 404 /index.php
+</IfModule>
 # Gestion d'Absences MVC - .htaccess
 
 # Enable rewrite engine

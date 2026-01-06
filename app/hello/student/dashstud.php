@@ -18,7 +18,34 @@ $stats = $mysqli->query("
          INNER JOIN attendance a ON m.id = a.module_id 
          WHERE a.student_id = $student_id 
          AND DAYOFWEEK(CURDATE()) = DAYOFWEEK(a.date)) as today_classes
-")->fetch_assoc();
+<?php
+// Ensure bootstrap is loaded when this view is accessed directly or via controller.
+if (!defined('BASE_PATH')) {
+    require_once __DIR__ . '/../../../bootstrap.php';
+}
+
+// Make DB connection available
+global $mysqli;
+
+// Access control: only students
+if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'student'){
+    header("Location: " . PUBLIC_URL . "/index.php/login/login");
+    exit();
+}
+
+$student_id = $_SESSION['user_id'];
+
+// Student stats
+$stats = $mysqli->query(""
+    SELECT 
+        (SELECT COUNT(DISTINCT a.module_id) FROM attendance a WHERE a.student_id = $student_id) as total_modules,
+        (SELECT COUNT(*) FROM attendance WHERE student_id = $student_id AND status = 'absent') as total_absences,
+        (SELECT COUNT(*) FROM attendance WHERE student_id = $student_id) as total_classes,
+        (SELECT COUNT(*) FROM modules m 
+         INNER JOIN attendance a ON m.id = a.module_id 
+         WHERE a.student_id = $student_id 
+         AND DAYOFWEEK(CURDATE()) = DAYOFWEEK(a.date)) as today_classes
+""")->fetch_assoc();
 
 // Calculate attendance rate
 $attendance_rate = $stats['total_classes'] > 0 
@@ -26,13 +53,14 @@ $attendance_rate = $stats['total_classes'] > 0
     : 0;
 
 // Recent attendance
-$recent_attendance = $mysqli->query("
+$recent_attendance = $mysqli->query(""
     SELECT m.module_name, a.date, a.status
     FROM attendance a
     JOIN modules m ON a.module_id = m.id
     WHERE a.student_id = $student_id
     ORDER BY a.date DESC
     LIMIT 10
+
 ");
 
 // Enrolled modules with professors
@@ -44,27 +72,6 @@ $recent_attendance = $mysqli->query("
 <head>
 <meta charset="UTF-8">
 <title>Student Dashboard | macademia Faculty</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-<style>
-:root {
-    --primary: #00f5ff;
-    --primary-glow: rgba(0, 245, 255, 0.5);
-    --secondary: #7b2ff7;
-    --accent: #f72b7b;
-    --bg-main: linear-gradient(135deg, #0a0e27 0%, #12172f 50%, #1a1f3a 100%);
-    --bg-panel: rgba(10, 14, 39, 0.7);
-    --bg-card: rgba(255, 255, 255, 0.04);
-    --bg-card-border: rgba(255, 255, 255, 0.08);
-    --text-primary: #f0f4f8;
-    --text-secondary: #cbd5e1;
-    --text-muted: #94a3b8;
-    --error: #ff3b3b;
-    --warning: #ffaa00;
-    --success: #00e676;
-    --shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.85);
-    --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-    --glass-blur: blur(24px) saturate(200%);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }

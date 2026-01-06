@@ -4,6 +4,11 @@
  * Defines all constants and loads configuration
  */
 
+// Development: show PHP errors in browser to help debug HTTP 500s
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
+
 // Define directory separators for cross-platform compatibility
 define('DS', DIRECTORY_SEPARATOR);
 

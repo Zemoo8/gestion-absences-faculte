@@ -1,6 +1,10 @@
 <?php
 // Bootstrap loads config and starts session; view is presentation-only.
 
+if (!defined('BASE_PATH')) {
+    require_once __DIR__ . '/../../../bootstrap.php';
+}
+
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'professor') {
     header("Location: " . PUBLIC_URL . "/index.php/login/login");
     exit();

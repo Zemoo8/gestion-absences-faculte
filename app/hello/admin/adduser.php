@@ -1,56 +1,18 @@
-<?php
+6<?php
 // Bootstrap loads config and starts session; view remains presentation-only.
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 require 'PHPMailer/src/Exception.php';
 require 'PHPMailer/src/PHPMailer.php';
 require 'PHPMailer/src/SMTP.php';
-if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin'){
-    header("Location: " . PUBLIC_URL . "/index.php/login/login");
-    exit();
+
+// Ensure bootstrap is loaded when this view is accessed directly or via controller.
+if (!defined('BASE_PATH')) {
+    require_once __DIR__ . '/../../../bootstrap.php';
 }
 
-// Pending requests for notification bell
-$pending_requests = $mysqli->query("
-    SELECT id, nom, prenom, email, created_at 
-    FROM account_requests 
-    WHERE status = 'pending' 
-    ORDER BY created_at DESC 
-    LIMIT 5"
-);
-
-$msg = "";
-
-if($_SERVER["REQUEST_METHOD"] == "POST"){
-    $nom = trim($_POST['nom']);
-    $prenom = trim($_POST['prenom']);
-    $email = trim($_POST['email']);
-    $role = $_POST['role'];
-
-    if(empty($nom) || empty($prenom) || empty($email)) {
-        $msg = "<div style='color:#ff3b3b;margin-bottom:1rem;'>All fields required!</div>";
-    } elseif(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $msg = "<div style='color:#ff3b3b;margin-bottom:1rem;'>Invalid email!</div>";
-    } else {
-        $check = $mysqli->prepare("SELECT id FROM users WHERE email=?");
-        $check->bind_param("s", $email);
-        $check->execute();
-        if($check->get_result()->num_rows > 0) {
-            $msg = "<div style='color:#ff3b3b;margin-bottom:1rem;'>Email exists!</div>";
-        } else {
-            $pass = bin2hex(random_bytes(4));
-            $hashed = password_hash($pass, PASSWORD_DEFAULT);
-            $stmt = $mysqli->prepare("INSERT INTO users (nom, prenom, email, password, role) VALUES (?, ?, ?, ?, ?)");
-            $stmt->bind_param("sssss", $nom, $prenom, $email, $hashed, $role);
-            if($stmt->execute()){
-                $msg = "<div style='color:#00e676;margin-bottom:1rem;'>User created! Password: <strong>$pass</strong></div>";
-            }
-        }
-    }
-}
-?>
-<?php
-
+// Make DB connection available
+global $mysqli;
 
 if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin'){
     header("Location: " . PUBLIC_URL . "/index.php/login/login");
@@ -58,8 +20,8 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin'){
 }
 
 // Pending requests for notification bell
-$pending_requests = $mysqli->query("
-    SELECT id, nom, prenom, email, created_at 
+$pending_requests = $mysqli->query(""
+    . "SELECT id, nom, prenom, email, created_at 
     FROM account_requests 
     WHERE status = 'pending' 
     ORDER BY created_at DESC 
@@ -614,7 +576,7 @@ body {
         <button class="sidebar-toggle" id="sidebarToggle">
             <i class="bi bi-list"></i>
         </button>
-        <a href="dashboard.php" class="logo">
+        <a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/dashboard" class="logo">
             <div class="logo-icon"><i class="bi bi-mortarboard-fill"></i></div>
             <h1>macademia Faculty</h1>
         </a>
@@ -633,7 +595,7 @@ body {
                 <?php if($pending_requests->num_rows > 0): ?>
                     <div class="dropdown-header">
                         <strong>Account Requests</strong>
-                        <a href="adduser.php" class="btn-small">+ Add User</a>
+                        <a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/addUser" class="btn-small">+ Add User</a>
                     </div>
                     <?php while($req = $pending_requests->fetch_assoc()): ?>
                     <div class="notification-item">
@@ -663,16 +625,16 @@ body {
     <!-- === SIDEBAR === -->
     <aside class="sidebar" id="sidebar">
         <ul class="sidebar-menu">
-            <li><a href="dashboard.php" class="sidebar-link"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
-            <li><a href="adduser.php" class="sidebar-link active"><i class="bi bi-person-plus"></i><span>Add User</span></a></li>
-            <li><a href="userlist.php" class="sidebar-link"><i class="bi bi-people"></i><span>User List</span></a></li>
-            <li><a href="addmodule.php" class="sidebar-link"><i class="bi bi-bookmark-plus"></i><span>Add Module</span></a></li>
-            <li><a href="modulelist.php" class="sidebar-link"><i class="bi bi-bookshelf"></i><span>Module List</span></a></li>
-                <li><a href="classes.php" class="sidebar-link"><i class="bi bi-collection"></i><span>Manage Classes</span></a></li>
-            <li><a href="assign_students.php" class="sidebar-link"><i class="bi bi-person-check"></i><span>Assign Students</span></a></li>
-            <li><a href="attendancerecord.php" class="sidebar-link"><i class="bi bi-clipboard-data"></i><span>Attendance</span></a></li>
-            <li><a href="notif.php" class="sidebar-link"><i class="bi bi-bell"></i><span>Notifications</span></a></li>
-            <li><a href="logout.php" class="sidebar-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a></li>
+            <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/dashboard" class="sidebar-link"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
+            <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/addUser" class="sidebar-link active"><i class="bi bi-person-plus"></i><span>Add User</span></a></li>
+            <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/userList" class="sidebar-link"><i class="bi bi-people"></i><span>User List</span></a></li>
+            <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/addModule" class="sidebar-link"><i class="bi bi-bookmark-plus"></i><span>Add Module</span></a></li>
+            <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/moduleList" class="sidebar-link"><i class="bi bi-bookshelf"></i><span>Module List</span></a></li>
+                <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/classes" class="sidebar-link"><i class="bi bi-collection"></i><span>Manage Classes</span></a></li>
+            <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/assignStudents" class="sidebar-link"><i class="bi bi-person-check"></i><span>Assign Students</span></a></li>
+            <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/attendanceRecord" class="sidebar-link"><i class="bi bi-clipboard-data"></i><span>Attendance</span></a></li>
+            <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/notifications" class="sidebar-link"><i class="bi bi-bell"></i><span>Notifications</span></a></li>
+            <li><a href="<?php echo PUBLIC_URL; ?>/index.php/login/logout" class="sidebar-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a></li>
         </ul>
     </aside>
 

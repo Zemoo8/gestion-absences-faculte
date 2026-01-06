@@ -1,5 +1,8 @@
 <?php
 // Bootstrap loads config and starts session; view remains presentation-only.
+if (!defined('BASE_PATH')) {
+    require_once __DIR__ . '/../../../bootstrap.php';
+}
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 

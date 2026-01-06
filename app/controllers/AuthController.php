@@ -45,17 +45,17 @@ class AuthController extends BaseController {
 
                     switch ($user['role']) {
                         case 'admin':
-                            $target = PUBLIC_URL . '/app/hello/admin/dashboard.php';
+                            $target = PUBLIC_URL . '/index.php/admindash';
                             header('X-Debug-Redirect: ' . $target);
                             $this->redirect($target);
                             break;
                         case 'professor':
-                            $target = PUBLIC_URL . '/app/hello/professor/prof_dashboard.php';
+                            $target = PUBLIC_URL . '/index.php/profdash';
                             header('X-Debug-Redirect: ' . $target);
                             $this->redirect($target);
                             break;
                         default:
-                            $target = PUBLIC_URL . '/app/hello/student/dashstud.php';
+                            $target = PUBLIC_URL . '/index.php/studdash';
                             header('X-Debug-Redirect: ' . $target);
                             $this->redirect($target);
                     }

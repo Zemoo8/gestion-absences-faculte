@@ -439,7 +439,7 @@ body {
         <button class="sidebar-toggle" id="sidebarToggle">
             <i class="bi bi-list"></i>
         </button>
-        <a href="prof_dashboard.php" class="logo">
+        <a href="<?= PUBLIC_URL ?>/index.php/profdash" class="logo">
             <div class="logo-icon"><i class="bi bi-mortarboard-fill"></i></div>
             <h1>macademia Faculty</h1>
         </a>
@@ -467,11 +467,11 @@ body {
     <!-- === SIDEBAR === -->
     <aside class="sidebar" id="sidebar">
         <ul class="sidebar-menu">
-            <li><a href="prof_dashboard.php" class="sidebar-link active"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
-            <li><a href="my_modules.php" class="sidebar-link"><i class="bi bi-bookshelf"></i><span>My Modules</span></a></li>
-            <li><a href="students.php" class="sidebar-link"><i class="bi bi-people"></i><span>Students</span></a></li>
-            <li><a href="reports.php" class="sidebar-link"><i class="bi bi-graph-up"></i><span>Reports</span></a></li>
-            <li><a href="logout.php" class="sidebar-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a></li>
+            <li><a href="<?= PUBLIC_URL ?>/index.php/profdash" class="sidebar-link active"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
+            <li><a href="<?= PUBLIC_URL ?>/index.php/profdash/my_modules" class="sidebar-link"><i class="bi bi-bookshelf"></i><span>My Modules</span></a></li>
+            <li><a href="<?= PUBLIC_URL ?>/index.php/profdash/students" class="sidebar-link"><i class="bi bi-people"></i><span>Students</span></a></li>
+            <li><a href="<?= PUBLIC_URL ?>/index.php/profdash/reports" class="sidebar-link"><i class="bi bi-graph-up"></i><span>Reports</span></a></li>
+            <li><a href="<?= PUBLIC_URL ?>/index.php/login/logout" class="sidebar-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a></li>
         </ul>
     </aside>
 
@@ -520,7 +520,7 @@ body {
                 </div>
                 
                 <button class="attendance-btn <?php echo $can_mark ? 'enabled' : 'disabled'; ?>" 
-                        <?php echo $can_mark ? "onclick=\"location.href='take_attendance.php?module={$mod['id']}'\"" : "disabled"; ?>>
+                    <?php echo $can_mark ? 'onclick="location.href=\'' . PUBLIC_URL . '/index.php/profdash/take_attendance?module=' . $mod["id"] . '\'"' : 'disabled'; ?>>
                     <i class="bi bi-camera"></i> <?php echo $can_mark ? 'Take Attendance Now' : 'Outside Class Hours'; ?>
                 </button>
             </div>

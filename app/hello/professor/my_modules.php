@@ -382,7 +382,7 @@ body {
         <button class="sidebar-toggle" id="sidebarToggle">
             <i class="bi bi-list"></i>
         </button>
-        <a href="prof_dashboard.php" class="logo">
+        <a href="<?= PUBLIC_URL ?>/index.php/profdash" class="logo">
             <div class="logo-icon"><i class="bi bi-mortarboard-fill"></i></div>
             <h1>macademia Faculty</h1>
         </a>
@@ -410,11 +410,11 @@ body {
     <!-- === SIDEBAR === -->
     <aside class="sidebar" id="sidebar">
         <ul class="sidebar-menu">
-            <li><a href="prof_dashboard.php" class="sidebar-link"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
-            <li><a href="my_modules.php" class="sidebar-link active"><i class="bi bi-bookshelf"></i><span>My Modules</span></a></li>
-            <li><a href="students.php" class="sidebar-link"><i class="bi bi-people"></i><span>Students</span></a></li>
-            <li><a href="reports.php" class="sidebar-link"><i class="bi bi-graph-up"></i><span>Reports</span></a></li>
-            <li><a href="logout.php" class="sidebar-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a></li>
+            <li><a href="<?= PUBLIC_URL ?>/index.php/profdash" class="sidebar-link"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
+            <li><a href="<?= PUBLIC_URL ?>/index.php/profdash/my_modules" class="sidebar-link active"><i class="bi bi-bookshelf"></i><span>My Modules</span></a></li>
+            <li><a href="<?= PUBLIC_URL ?>/index.php/profdash/students" class="sidebar-link"><i class="bi bi-people"></i><span>Students</span></a></li>
+            <li><a href="<?= PUBLIC_URL ?>/index.php/profdash/reports" class="sidebar-link"><i class="bi bi-graph-up"></i><span>Reports</span></a></li>
+            <li><a href="<?= PUBLIC_URL ?>/index.php/login/logout" class="sidebar-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a></li>
         </ul>
     </aside>
 
@@ -439,7 +439,7 @@ body {
                         <div class="value"><?php echo round($mod['avg_attendance'] ?? 0); ?>%</div>
                         <div style="font-size: 0.75rem;">Avg Attendance</div>
                     </div>
-                    <button onclick="location.href='take_attendance.php?module=<?php echo $mod['id']; ?>'" 
+                        <button onclick="location.href='<?= PUBLIC_URL ?>/index.php/profdash/take_attendance?module=<?php echo $mod['id']; ?>'" 
                             style="background: var(--primary); border: none; padding: 0.5rem 1rem; border-radius: 8px; color: black; font-weight: 600; cursor: pointer;">
                         Take Attendance
                     </button>

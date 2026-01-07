@@ -177,6 +177,9 @@ body {
 .sidebar-link.active {
     color: var(--primary); background: rgba(255, 255, 255, 0.04);
 }
+.sidebar-link:hover {
+    color: var(--primary); background: rgba(255, 255, 255, 0.04);
+}
 .sidebar-link i { font-size: 1.25rem; width: 24px; text-align: center; }
 .main-content {
     flex: 1; margin-left: 280px; padding: 2rem; transition: var(--transition);
@@ -273,8 +276,8 @@ h2 { color: var(--primary); margin-bottom: 1.5rem; }
             <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/userList" class="sidebar-link"><i class="bi bi-people"></i><span>User List</span></a></li>
             <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/addModule" class="sidebar-link"><i class="bi bi-bookmark-plus"></i><span>Add Module</span></a></li>
             <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/moduleList" class="sidebar-link"><i class="bi bi-bookshelf"></i><span>Module List</span></a></li>
-            <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/assignStudents" class="sidebar-link active"><i class="bi bi-person-check"></i><span>Assign Students</span></a></li>
             <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/classes" class="sidebar-link"><i class="bi bi-collection"></i><span>Manage Classes</span></a></li>
+            <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/assignStudents" class="sidebar-link"><i class="bi bi-person-check"></i><span>Assign Students</span></a></li>
             <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/attendanceRecord" class="sidebar-link"><i class="bi bi-clipboard-data"></i><span>Attendance</span></a></li>
             <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/notifications" class="sidebar-link"><i class="bi bi-bell"></i><span>Notifications</span></a></li>
             <li><a href="<?php echo PUBLIC_URL; ?>/index.php/login/logout" class="sidebar-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a></li>
@@ -342,6 +345,15 @@ const sidebar = document.getElementById('sidebar');
 
 sidebarToggle.addEventListener('click', () => {
     sidebar.classList.toggle('collapsed');
+});
+
+// === SET ACTIVE SIDEBAR LINK ===
+const currentPath = window.location.pathname;
+const sidebarLinks = document.querySelectorAll('.sidebar-link');
+sidebarLinks.forEach(link => {
+    if (link.href.includes('assignStudents')) {
+        link.classList.add('active');
+    }
 });
 
 // === NOTIFICATION DROPDOWN ===

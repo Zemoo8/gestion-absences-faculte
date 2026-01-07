@@ -4,6 +4,8 @@
 if (!defined('BASE_PATH')) {
     require_once __DIR__ . '/../../../bootstrap.php';
 }
+global $mysqli;
+
 
 // If this view is accessed directly (not via the front controller), redirect
 if (basename($_SERVER['SCRIPT_NAME']) !== 'index.php') {
@@ -446,7 +448,7 @@ body {
                         <div class="value"><?php echo round($mod['avg_attendance'] ?? 0); ?>%</div>
                         <div style="font-size: 0.75rem;">Avg Attendance</div>
                     </div>
-                            <button onclick="location.href='take_attendance.php?module=<?php echo $mod['id']; ?>'" 
+                    <button onclick="location.href='<?php echo (defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost') . "/index.php/profdash/take_attendance?module=" . $mod['id']; ?>'" 
                             style="background: var(--primary); border: none; padding: 0.5rem 1rem; border-radius: 8px; color: black; font-weight: 600; cursor: pointer;">
                         Take Attendance
                     </button>

@@ -3,6 +3,7 @@
 if (!defined('BASE_PATH')) {
     require_once __DIR__ . '/../../../bootstrap.php';
 }
+global $mysqli;
 
 // If accessed directly, redirect to front-controller professor students route
 if (basename($_SERVER['SCRIPT_NAME']) !== 'index.php') {

@@ -3,6 +3,7 @@
 if (!defined('BASE_PATH')) {
     require_once __DIR__ . '/../../../bootstrap.php';
 }
+global $mysqli;
 
 // Redirect direct access to canonical front-controller take_attendance route
 if (basename($_SERVER['SCRIPT_NAME']) !== 'index.php') {
@@ -85,9 +86,11 @@ $end_time   = $currentSession['end_time'];
    LOAD STUDENTS + SESSION STATUS
 ======================= */
 $students = $mysqli->query("
-    SELECT u.id, u.nom, u.prenom,
+    SELECT DISTINCT u.id, u.nom, u.prenom,
            a.status
     FROM users u
+    INNER JOIN student_classes sc ON u.id = sc.student_id
+    INNER JOIN module_classes mc ON sc.class_id = mc.class_id
     LEFT JOIN attendance a
       ON a.student_id = u.id
      AND a.module_id  = $module_id
@@ -95,6 +98,7 @@ $students = $mysqli->query("
      AND a.start_time = '$start_time'
      AND a.end_time   = '$end_time'
     WHERE u.role = 'student'
+      AND mc.module_id = $module_id
     ORDER BY u.nom
 ");
 

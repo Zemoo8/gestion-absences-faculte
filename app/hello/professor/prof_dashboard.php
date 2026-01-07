@@ -527,7 +527,7 @@ body {
                 </div>
                 
                 <button class="attendance-btn <?php echo $can_mark ? 'enabled' : 'disabled'; ?>" 
-                    <?php echo $can_mark ? "onclick=\"location.href='take_attendance.php?module={$mod['id']}'\"" : 'disabled'; ?>>
+                    <?php echo $can_mark ? "onclick=\"location.href='" . (defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost') . "/index.php/profdash/take_attendance?module={$mod['id']}'\"" : 'disabled'; ?>>
                     <i class="bi bi-camera"></i> <?php echo $can_mark ? 'Take Attendance Now' : 'Outside Class Hours'; ?>
                 </button>
             </div>

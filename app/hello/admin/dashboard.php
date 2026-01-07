@@ -370,6 +370,11 @@ body {
     background: rgba(255, 255, 255, 0.04);
 }
 
+.sidebar-link:hover {
+    color: var(--primary);
+    background: rgba(255, 255, 255, 0.04);
+}
+
 .sidebar-link i {
     font-size: 1.25rem;
     width: 24px;

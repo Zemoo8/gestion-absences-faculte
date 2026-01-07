@@ -4,6 +4,15 @@ if (!defined('BASE_PATH')) {
     require_once __DIR__ . '/../../../bootstrap.php';
 }
 
+// Redirect direct access to canonical front-controller take_attendance route
+if (basename($_SERVER['SCRIPT_NAME']) !== 'index.php') {
+    $module = isset($_GET['module']) ? (int)$_GET['module'] : 0;
+    $base = defined('PUBLIC_URL') ? PUBLIC_URL : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+    $target = $base . '/index.php/profdash/take_attendance' . ($module ? '?module=' . $module : '');
+    header('Location: ' . $target);
+    exit();
+}
+
 function ip_in_subnet($ip, $subnet, $mask) {
     $ip = ip2long($ip);
     $subnet = ip2long($subnet);

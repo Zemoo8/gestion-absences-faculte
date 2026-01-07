@@ -5,6 +5,13 @@ if (!defined('BASE_PATH')) {
     require_once __DIR__ . '/../../../bootstrap.php';
 }
 
+// Redirect direct file access to front-controller professor reports route
+if (basename($_SERVER['SCRIPT_NAME']) !== 'index.php') {
+    $base = defined('PUBLIC_URL') ? PUBLIC_URL : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+    header('Location: ' . $base . '/index.php/profdash/reports');
+    exit();
+}
+
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'professor') {
     header("Location: " . PUBLIC_URL . "/index.php/login/login");
     exit();
@@ -342,7 +349,7 @@ body {
         <button class="sidebar-toggle" id="sidebarToggle">
             <i class="bi bi-list"></i>
         </button>
-        <a href="<?= PUBLIC_URL ?>/index.php/profdash" class="logo">
+        <a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/profdash" class="logo">
             <div class="logo-icon"><i class="bi bi-mortarboard-fill"></i></div>
             <h1>macademia Faculty</h1>
         </a>
@@ -370,11 +377,11 @@ body {
     <!-- === SIDEBAR === -->
     <aside class="sidebar" id="sidebar">
         <ul class="sidebar-menu">
-            <li><a href="<?= PUBLIC_URL ?>/index.php/profdash" class="sidebar-link"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
-            <li><a href="<?= PUBLIC_URL ?>/index.php/profdash/my_modules" class="sidebar-link"><i class="bi bi-bookshelf"></i><span>My Modules</span></a></li>
-            <li><a href="<?= PUBLIC_URL ?>/index.php/profdash/students" class="sidebar-link"><i class="bi bi-people"></i><span>Students</span></a></li>
-            <li><a href="<?= PUBLIC_URL ?>/index.php/profdash/reports" class="sidebar-link active"><i class="bi bi-graph-up"></i><span>Reports</span></a></li>
-            <li><a href="<?= PUBLIC_URL ?>/index.php/login/logout" class="sidebar-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a></li>
+            <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/profdash" class="sidebar-link"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
+            <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/profdash/my_modules" class="sidebar-link"><i class="bi bi-bookshelf"></i><span>My Modules</span></a></li>
+            <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/profdash/students" class="sidebar-link"><i class="bi bi-people"></i><span>Students</span></a></li>
+            <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/profdash/reports" class="sidebar-link active"><i class="bi bi-graph-up"></i><span>Reports</span></a></li>
+            <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/login/logout" class="sidebar-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a></li>
         </ul>
     </aside>
 

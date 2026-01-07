@@ -4,6 +4,13 @@ if (!defined('BASE_PATH')) {
     require_once __DIR__ . '/../../../bootstrap.php';
 }
 
+// If this view is opened directly, redirect to the front-controller student route
+if (basename($_SERVER['SCRIPT_NAME']) !== 'index.php') {
+    $base = defined('PUBLIC_URL') ? PUBLIC_URL : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+    header('Location: ' . $base . '/index.php/studdash/dashstud');
+    exit();
+}
+
 // Make DB connection available
 global $mysqli;
 
@@ -450,7 +457,7 @@ body {
         <button class="sidebar-toggle" id="sidebarToggle">
             <i class="bi bi-list"></i>
         </button>
-        <a href="<?= BASE_URL ?>/studdash/dashstud" class="logo">
+        <a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')); ?>/index.php/studdash/dashstud" class="logo">
             <div class="logo-icon"><i class="bi bi-mortarboard-fill"></i></div>
             <h1>macademia Faculty</h1>
         </a>
@@ -467,11 +474,11 @@ body {
 <div class="dashboard-wrapper">
     <aside class="sidebar" id="sidebar">
         <ul class="sidebar-menu">
-            <li><a href="<?= BASE_URL ?>/studdash/dashstud" class="sidebar-link active"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
-            <li><a href="<?= BASE_URL ?>/studdash/dashstud" class="sidebar-link"><i class="bi bi-calendar-check"></i><span>My Attendance</span></a></li>
-            <li><a href="<?= BASE_URL ?>/studdash/dashstud" class="sidebar-link"><i class="bi bi-bookshelf"></i><span>My Modules</span></a></li>
-            <li><a href="<?= BASE_URL ?>/studdash/dashstud" class="sidebar-link"><i class="bi bi-exclamation-circle"></i><span>My Absences</span></a></li>
-            <li><a href="<?= BASE_URL ?>/login/logout" class="sidebar-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a></li>
+            <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')); ?>/index.php/studdash/dashstud" class="sidebar-link active"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
+            <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')); ?>/index.php/studdash/dashstud" class="sidebar-link"><i class="bi bi-calendar-check"></i><span>My Attendance</span></a></li>
+            <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')); ?>/index.php/studdash/dashstud" class="sidebar-link"><i class="bi bi-bookshelf"></i><span>My Modules</span></a></li>
+            <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')); ?>/index.php/studdash/dashstud" class="sidebar-link"><i class="bi bi-exclamation-circle"></i><span>My Absences</span></a></li>
+            <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')); ?>/index.php/login/logout" class="sidebar-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a></li>
         </ul>
     </aside>
 

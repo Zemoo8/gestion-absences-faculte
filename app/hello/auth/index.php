@@ -57,7 +57,7 @@
             </div>
 
             <!-- Portal Access CTA -->
-            <a href="login.php" class="portal-cta">
+            <a href="/projet/Gestion-absences/public/index.php/login/login" class="portal-cta">
                 <span class="cta-text">Log In</span>
                 <div class="cta-shimmer"></div>
                 <i class="bi bi-box-arrow-in-right"></i>
@@ -77,7 +77,7 @@
         <a href="#features" class="mobile-link">Academy</a>
         <a href="#testimonials" class="mobile-link">Legacy</a>
         <a href="#video" class="mobile-link">Experience</a>
-        <a href="login.php" class="mobile-link mobile-cta">Log In</a>
+        <a href="/projet/Gestion-absences/public/index.php/login/login" class="mobile-link mobile-cta">Log In</a>
     </div>
 </header>
 

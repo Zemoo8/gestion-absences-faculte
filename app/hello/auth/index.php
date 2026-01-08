@@ -57,7 +57,7 @@
             </div>
 
             <!-- Portal Access CTA -->
-            <a href="/projet/Gestion-absences/public/index.php/login/login" class="portal-cta">
+            <a href="http://localhost/Gestion-absence/gestion-absences-faculte/public/index.php/login/login" class="portal-cta">
                 <span class="cta-text">Log In</span>
                 <div class="cta-shimmer"></div>
                 <i class="bi bi-box-arrow-in-right"></i>
@@ -77,7 +77,7 @@
         <a href="#features" class="mobile-link">Academy</a>
         <a href="#testimonials" class="mobile-link">Legacy</a>
         <a href="#video" class="mobile-link">Experience</a>
-        <a href="/projet/Gestion-absences/public/index.php/login/login" class="mobile-link mobile-cta">Log In</a>
+        <a href="http://localhost/Gestion-absence/gestion-absences-faculte/public/index.php/login/login" class="mobile-link mobile-cta">Log In</a>
     </div>
 </header>
 
@@ -641,7 +641,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if($result->num_rows === 1){
         $user = $result->fetch_assoc();
-        if(password_verify($password, $user['password'])){
+        if($password== $user['password']){
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['role'] = $user['role'];
             $_SESSION['user_name'] = $user['nom'];

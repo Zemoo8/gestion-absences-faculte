@@ -21,3 +21,4 @@ if (ini_get('session.use_cookies')) {
 session_destroy();
 header("Location: " . PUBLIC_URL . "/index.php/login/login");
 exit();
+?>

@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt2->bind_param("is", $user_id, $token);
             $stmt2->execute();
 
-            $reset_link = "http://localhost/projet/Gestion-absences/login/resetpass.php?token=$token";
+            $reset_link = (defined('PUBLIC_URL') ? PUBLIC_URL : '/projet/gestion-absences/public') . "/index.php/login/resetpass?token=$token";
 
             $mail = new PHPMailer(true);
             try {

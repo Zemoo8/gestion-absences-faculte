@@ -23,39 +23,57 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'student'){
 $student_id = $_SESSION['user_id'];
 
 // Student stats
-$stats = $mysqli->query("
-    SELECT 
-        (SELECT COUNT(DISTINCT a.module_id) FROM attendance a WHERE a.student_id = $student_id) as total_modules,
-        (SELECT COUNT(*) FROM attendance WHERE student_id = $student_id AND status = 'absent') as total_absences,
-        (SELECT COUNT(*) FROM attendance WHERE student_id = $student_id) as total_classes,
-        (SELECT COUNT(*) FROM modules m 
-         INNER JOIN attendance a ON m.id = a.module_id 
-         WHERE a.student_id = $student_id 
-         AND DAYOFWEEK(CURDATE()) = DAYOFWEEK(a.date)) as today_classes
-")->fetch_assoc();
+$stats_result = $mysqli->query("SELECT 
+    (SELECT COUNT(DISTINCT a.module_id) FROM attendance a WHERE a.student_id = $student_id) as total_modules,
+    (SELECT COUNT(*) FROM attendance WHERE student_id = $student_id AND status = 'absent') as total_absences,
+    (SELECT COUNT(*) FROM attendance WHERE student_id = $student_id) as total_classes,
+    (SELECT COUNT(*) FROM modules m 
+     INNER JOIN attendance a ON m.id = a.module_id 
+     INNER JOIN module_schedule ms ON m.id = ms.module_id
+     WHERE a.student_id = $student_id 
+     AND ms.weekday = DAYOFWEEK(CURDATE())) as today_classes
+");
+if ($stats_result && ($row = $stats_result->fetch_assoc())) {
+    $stats = $row;
+} else {
+    $stats = [
+        'total_modules' => 0,
+        'total_absences' => 0,
+        'total_classes' => 0,
+        'today_classes' => 0
+    ];
+}
 
-// Calculate attendance rate
 $attendance_rate = $stats['total_classes'] > 0 
     ? round((($stats['total_classes'] - $stats['total_absences']) / $stats['total_classes']) * 100, 1) 
     : 0;
 
 // My Modules
 $my_modules = $mysqli->query("
-    SELECT m.module_name, u.prenom as prof_prenom, u.nom as prof_nom, ms.day as schedule_day, ms.start_time as schedule_time
+    SELECT m.module_name, u.prenom as prof_prenom, u.nom as prof_nom, ms.weekday, ms.start_time
     FROM modules m
     JOIN users u ON m.professor_id = u.id
     LEFT JOIN module_schedule ms ON m.id = ms.module_id
     WHERE m.id IN (SELECT DISTINCT module_id FROM attendance WHERE student_id = $student_id)
 ");
+if ($my_modules === false) {
+    $my_modules = false;
+}
 
 // Schedule
 $schedule = $mysqli->query("
-    SELECT m.module_name, ms.day as schedule_day, ms.start_time as schedule_time
+    SELECT m.module_name, ms.weekday, ms.start_time
     FROM modules m
     JOIN module_schedule ms ON m.id = ms.module_id
     WHERE m.id IN (SELECT DISTINCT module_id FROM attendance WHERE student_id = $student_id)
-    ORDER BY ms.day, ms.start_time
+    ORDER BY ms.weekday, ms.start_time
 ");
+if ($schedule === false) {
+    $schedule = false;
+}
+
+$days = [1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday', 7 => 'Sunday'];
+
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
@@ -474,80 +492,187 @@ body {
 <div class="dashboard-wrapper">
     <aside class="sidebar" id="sidebar">
         <ul class="sidebar-menu">
-            <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')); ?>/index.php/studdash/dashstud" class="sidebar-link active"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
-            <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')); ?>/index.php/studdash/dashstud" class="sidebar-link"><i class="bi bi-calendar-check"></i><span>My Attendance</span></a></li>
-            <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')); ?>/index.php/studdash/dashstud" class="sidebar-link"><i class="bi bi-bookshelf"></i><span>My Modules</span></a></li>
-            <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')); ?>/index.php/studdash/dashstud" class="sidebar-link"><i class="bi bi-exclamation-circle"></i><span>My Absences</span></a></li>
-            <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')); ?>/index.php/login/logout" class="sidebar-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a></li>
+            <li><a href="/projet/Gestion-absences/public/index.php/studdash/dashstud" class="sidebar-link active"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
+            <li><a href="/projet/Gestion-absences/app/hello/student/attendance.php" class="sidebar-link"><i class="bi bi-calendar-check"></i><span>My Attendance</span></a></li>
+            <li><a href="/projet/Gestion-absences/app/hello/student/modules.php" class="sidebar-link"><i class="bi bi-bookshelf"></i><span>My Modules</span></a></li>
+            <li><a href="/projet/Gestion-absences/app/hello/student/absences.php" class="sidebar-link"><i class="bi bi-exclamation-circle"></i><span>My Absences</span></a></li>
+            <li><a href="/projet/Gestion-absences/public/index.php/login/logout" class="sidebar-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a></li>
         </ul>
     </aside>
 
-    <main class="main-content">
-        <div class="chatbot-container">
-            <div class="chatbot-placeholder">
-                <div class="chatbot-icon">
-                    <i class="bi bi-robot"></i>
-                </div>
-                <h2>Welcome to Your Dashboard</h2>
-                <p>View your attendance, modules, and schedule information.</p>
-            </div>
-        </div>
 
-        <div class="info-panel">
-            <div class="info-card">
-                <h3>Attendance Summary</h3>
-                <div class="stat-row">
-                    <span class="stat-label">Attendance Rate</span>
-                    <span class="stat-value <?php echo $attendance_rate >= 75 ? 'high' : ($attendance_rate >= 50 ? 'medium' : 'low'); ?>">
-                        <?php echo $attendance_rate; ?>%
-                    </span>
+    <main class="main-content" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 80vh; width: 100%;">
+        <!-- Chatbot Card -->
+        <div class="chatbot-placeholder" style="width:100%;max-width:900px;height:600px;background:var(--bg-card);backdrop-filter:var(--glass-blur);border:1px solid var(--bg-card-border);border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.5rem;box-shadow:var(--shadow);position:relative;overflow:hidden;">
+            <div style="width:100%;padding:0 2.5rem;">
+                <div style="display:flex;align-items:center;gap:1.5rem;margin-bottom:2rem;">
+                    <div style="width:80px;height:80px;background:linear-gradient(135deg,var(--primary),var(--accent));border-radius:50%;display:grid;place-items:center;font-size:3rem;box-shadow:0 0 30px var(--primary-glow);">🤖</div>
+                    <h2 style="font-size:2.5rem;font-weight:800;background:linear-gradient(135deg,var(--text-primary),var(--primary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0;">Student Assistant</h2>
                 </div>
-                <div class="stat-row">
-                    <span class="stat-label">Total Classes</span>
-                    <span class="stat-value"><?php echo $stats['total_classes']; ?></span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Absences</span>
-                    <span class="stat-value low"><?php echo $stats['total_absences']; ?></span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Enrolled Modules</span>
-                    <span class="stat-value"><?php echo $stats['total_modules']; ?></span>
-                </div>
-            </div>
-
-            <div class="info-card">
-                <h3>My Modules</h3>
-                <?php if($my_modules && $my_modules->num_rows > 0): ?>
-                    <?php while($mod = $my_modules->fetch_assoc()): ?>
-                    <div class="module-item">
-                        <div class="module-name"><?php echo htmlspecialchars($mod['module_name']); ?></div>
-                        <div class="module-details">
-                            <?php echo htmlspecialchars($mod['prof_prenom'] . ' ' . $mod['prof_nom']); ?>
+                <div id="chatLog" style="height:370px;overflow-y:auto;background:rgba(255,255,255,0.03);border-radius:16px;padding:1.2rem;margin-bottom:2rem;box-shadow:0 2px 8px rgba(0,0,0,0.10);font-size:1.25rem;">
+                    <div class="message ai" style="display:flex;align-items:flex-start;gap:14px;">
+                        <div class="message-avatar" style="width:45px;height:45px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;color:white;background:var(--secondary);font-size:2rem;">🤖</div>
+                        <div class="message-content" style="max-width:70%;padding:16px 20px;border-radius:18px;line-height:1.6;white-space:pre-line;background:var(--bg-card);color:var(--text-primary);border-bottom-left-radius:7px;box-shadow:0 2px 8px rgba(0,0,0,0.12);font-size:1.15rem;">
+                            Hi! Ask me about your absences, schedule, or modules.
                         </div>
                     </div>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">No modules enrolled</p>
-                <?php endif; ?>
-            </div>
-
-            <div class="info-card">
-                <h3>This Week's Schedule</h3>
-                <?php if($schedule && $schedule->num_rows > 0): ?>
-                    <?php while($sch = $schedule->fetch_assoc()): ?>
-                    <div class="schedule-item">
-                        <div class="schedule-time"><?php echo $sch['schedule_day'] . ' ' . $sch['schedule_time']; ?></div>
-                        <div class="schedule-name"><?php echo htmlspecialchars($sch['module_name']); ?></div>
-                    </div>
-                    <?php endwhile; ?>
-                <?php else: ?>  
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">No classes scheduled this week</p>
-                <?php endif; ?>
+                </div>
+                <div class="input-wrapper" style="display:flex;gap:16px;">
+                    <input type="text" id="userMessage" placeholder="Type your question here..." style="flex:1;padding:22px 28px;border:2px solid var(--bg-card-border);border-radius:32px;font-size:1.35rem;background:var(--bg-panel);color:var(--text-primary);outline:none;transition:border-color 0.3s;" onkeypress="handleEnter(event)">
+                    <button id="sendBtn" style="padding:22px 40px;background:linear-gradient(135deg,var(--primary) 0%,var(--secondary) 100%);color:white;border:none;border-radius:32px;cursor:pointer;font-size:1.35rem;font-weight:800;transition:transform 0.2s,box-shadow 0.2s;" onclick="sendMessage()">Send</button>
+                </div>
             </div>
         </div>
-    </main>
-</div>
+
+        <!-- My Schedule Card -->
+        <div class="info-card" style="width:100%;max-width:900px;margin-top:2rem;box-shadow:var(--shadow);background:var(--bg-card);border-radius:20px;padding:2rem 2.5rem;">
+            <h3 style="font-size:1.7rem;font-weight:700;color:var(--primary);margin-bottom:1.2rem;">My Schedule</h3>
+            <?php if($schedule && $schedule->num_rows > 0): ?>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.2rem;">
+                <?php while($sch = $schedule->fetch_assoc()): ?>
+                    <div class="schedule-item" style="background:rgba(0,245,255,0.08);border-radius:12px;padding:1rem 1.2rem;">
+                        <div class="schedule-time" style="font-weight:700;color:var(--primary);font-size:1.1rem;">
+                            <?php echo ($days[(int)$sch['weekday']] ?? $sch['weekday']) . ' ' . $sch['start_time']; ?>
+                        </div>
+                        <div class="schedule-name" style="color:var(--text-secondary);font-size:1rem;">
+                            <?php echo htmlspecialchars($sch['module_name']); ?>
+                        </div>
+                    </div>
+                <?php endwhile; ?>
+                </div>
+            <?php else: ?>
+                <p style="color: var(--text-muted); font-size: 1.1rem;">No classes scheduled this week</p>
+            <?php endif; ?>
+        </div>
+        <script>
+        const chatLog = document.getElementById('chatLog');
+        const userInput = document.getElementById('userMessage');
+        const sendBtn = document.getElementById('sendBtn');
+
+        function handleEnter(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+            messageDiv.style.display = 'flex';
+            messageDiv.style.alignItems = 'flex-start';
+            messageDiv.style.gap = '14px';
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = isUser ? '👤' : '🤖';
+            avatar.style.width = '45px';
+            avatar.style.height = '45px';
+            avatar.style.borderRadius = '50%';
+            avatar.style.display = 'flex';
+            avatar.style.alignItems = 'center';
+            avatar.style.justifyContent = 'center';
+            avatar.style.fontWeight = 'bold';
+            avatar.style.color = 'white';
+            avatar.style.background = isUser ? 'var(--primary)' : 'var(--secondary)';
+            avatar.style.fontSize = '2rem';
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = content;
+            contentDiv.style.maxWidth = '70%';
+            contentDiv.style.padding = '16px 20px';
+            contentDiv.style.borderRadius = '18px';
+            contentDiv.style.lineHeight = '1.6';
+            contentDiv.style.whiteSpace = 'pre-line';
+            contentDiv.style.background = isUser ? 'var(--primary)' : 'var(--bg-card)';
+            contentDiv.style.color = isUser ? 'white' : 'var(--text-primary)';
+            contentDiv.style.borderBottomRightRadius = isUser ? '7px' : '';
+            contentDiv.style.borderBottomLeftRadius = !isUser ? '7px' : '';
+            contentDiv.style.boxShadow = '0 2px 8px rgba(0,0,0,0.12)';
+            contentDiv.style.fontSize = '1.15rem';
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(contentDiv);
+            chatLog.appendChild(messageDiv);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        function showTyping() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message ai';
+            typingDiv.id = 'typing-indicator';
+            typingDiv.style.display = 'flex';
+            typingDiv.style.alignItems = 'flex-start';
+            typingDiv.style.gap = '14px';
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = '🤖';
+            avatar.style.background = 'var(--secondary)';
+            avatar.style.width = '45px';
+            avatar.style.height = '45px';
+            avatar.style.borderRadius = '50%';
+            avatar.style.display = 'flex';
+            avatar.style.alignItems = 'center';
+            avatar.style.justifyContent = 'center';
+            avatar.style.fontWeight = 'bold';
+            avatar.style.color = 'white';
+            avatar.style.fontSize = '2rem';
+            const typingContent = document.createElement('div');
+            typingContent.className = 'message-content typing-indicator';
+            typingContent.innerHTML = '<span></span><span></span><span></span>';
+            typingContent.style.background = 'var(--bg-card)';
+            typingContent.style.color = 'var(--text-primary)';
+            typingContent.style.padding = '16px 20px';
+            typingContent.style.borderRadius = '18px';
+            typingContent.style.fontSize = '1.15rem';
+            typingDiv.appendChild(avatar);
+            typingDiv.appendChild(typingContent);
+            chatLog.appendChild(typingDiv);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        function removeTyping() {
+            const typing = document.getElementById('typing-indicator');
+            if (typing) {
+                typing.remove();
+            }
+        }
+
+        async function sendMessage() {
+            const msg = userInput.value.trim();
+            if (!msg) return;
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+            addMessage(msg, true);
+            userInput.value = '';
+            showTyping();
+            try {
+                const response = await fetch('http://127.0.0.1:5000/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        message: msg,
+                        email: "<?php echo $_SESSION['email'] ?? ''; ?>"
+                    })
+                });
+                removeTyping();
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+                const data = await response.json();
+                addMessage(data.answer || "Sorry, I couldn't process that.");
+            } catch (err) {
+                removeTyping();
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.textContent = `Error: ${err.message}. Please make sure the backend server is running.`;
+                chatLog.appendChild(errorDiv);
+            } finally {
+                userInput.disabled = false;
+                sendBtn.disabled = false;
+                userInput.focus();
+            }
+        }
+        userInput && userInput.focus();
+        </script>
+
 
 <script>
 const sidebarToggle = document.getElementById('sidebarToggle');

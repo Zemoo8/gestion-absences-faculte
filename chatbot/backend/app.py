@@ -13,7 +13,7 @@ CORS(app)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 LM_STUDIO_URL = "http://127.0.0.1:1234/v1/completions"
-MODEL_NAME = "openai/gpt-oss-20b"
+MODEL_NAME = "mistral-7b-instruct-v0.2.Q4_K_M.gguf"
 DB_PATH = 'student_system.db'
 
 # Auto-create test database if missing
@@ -38,7 +38,7 @@ class Intent(Enum):
     SCHEDULE_QUERY = "schedule_query"
     MODULE_LIST = "module_list"
     FALLBACK = "fallback"
-
+    
 # ==================== SEMANTIC INTENT CLASSIFIER ====================
 def classify_intent_with_llm(message: str) -> tuple[Intent, float]:
     """

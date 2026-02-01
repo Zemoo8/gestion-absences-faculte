@@ -50,18 +50,44 @@ $result = $mysqli->query("
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 <style>
+/* Dark Theme (Default) */
 :root {
-    --primary: #00f5ff; --primary-glow: rgba(0, 245, 255, 0.5);
-    --secondary: #7b2ff7; --accent: #f72b7b;
+    --primary: #00f5ff;
+    --primary-glow: rgba(0, 245, 255, 0.5);
+    --secondary: #7b2ff7;
+    --accent: #f72b7b;
     --bg-main: linear-gradient(135deg, #0a0e27 0%, #12172f 50%, #1a1f3a 100%);
     --bg-panel: rgba(10, 14, 39, 0.7);
     --bg-card: rgba(255, 255, 255, 0.04);
     --bg-card-border: rgba(255, 255, 255, 0.08);
-    --text-primary: #f0f4f8; --text-secondary: #cbd5e1; --text-muted: #94a3b8;
-    --error: #ff3b3b; --success: #00e676;
+    --text-primary: #f0f4f8;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --error: #ff3b3b;
+    --success: #00e676;
     --shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.85);
     --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     --glass-blur: blur(24px) saturate(200%);
+}
+
+/* Light Theme */
+:root[data-theme="light"] {
+    --primary: #8B5E3C;
+    --primary-glow: rgba(139,94,60,0.12);
+    --secondary: #3B6A47;
+    --accent: #A67C52;
+    --bg-main: linear-gradient(180deg, #f4efe6 0%, #efe7d9 100%);
+    --bg-panel: rgba(255, 255, 255, 0.9);
+    --bg-card: #ffffff;
+    --bg-card-border: rgba(0, 0, 0, 0.06);
+    --text-primary: #2b2b2b;
+    --text-secondary: #4b4b4b;
+    --text-muted: #6b6b6b;
+    --error: #c53030;
+    --success: #2f855a;
+    --shadow: 0 12px 30px rgba(15,15,15,0.08);
+    --transition: all 0.3s ease;
+    --glass-blur: blur(8px) saturate(120%);
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -115,13 +141,13 @@ body {
     display: grid; place-items: center; animation: pulseBadge 2s ease infinite;
 }
 .notification-dropdown {
-    position: absolute; top: 100%; right: 0; margin-top: 1rem; backdrop-filter: none;
-    border: 1px solid var(--bg-card-border); border-radius: 14px; min-width: 320px;
+    position: absolute; top: 100%; right: 0; margin-top: 1rem; backdrop-filter: var(--glass-blur);
+    background: var(--bg-panel); border: 1px solid var(--bg-card-border); border-radius: 14px; min-width: 320px;
     max-width: 400px; box-shadow: var(--shadow); opacity: 1; visibility: hidden;
     transform: translateY(-10px); transition: var(--transition); z-index: 1001;
 }
 .notification-dropdown.show {
-    background: #0a0e27; opacity: 1; visibility: visible; transform: translateY(0);
+    opacity: 1; visibility: visible; transform: translateY(0);
 }
 .dropdown-header {
     display: flex; justify-content: space-between; align-items: center;
@@ -152,6 +178,28 @@ body {
     background: linear-gradient(135deg, var(--secondary), var(--accent));
     display: grid; place-items: center; font-size: 1rem; font-weight: 700;
 }
+
+.theme-toggle {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--bg-card-border);
+    color: var(--text-secondary);
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
+}
+
 .dashboard-wrapper { display: flex; min-height: 100vh; margin-top: 70px; }
 .sidebar {
     width: 280px; background: var(--bg-panel); border-right: 1px solid var(--bg-card-border);
@@ -169,8 +217,14 @@ body {
 .sidebar-link.active {
     color: var(--primary); background: rgba(255, 255, 255, 0.04);
 }
+:root[data-theme="light"] .sidebar-link.active {
+    background: rgba(139, 94, 60, 0.08);
+}
 .sidebar-link:hover {
     color: var(--primary); background: rgba(255, 255, 255, 0.04);
+}
+:root[data-theme="light"] .sidebar-link:hover {
+    background: rgba(139, 94, 60, 0.08);
 }
 .sidebar-link i { font-size: 1.25rem; width: 24px; text-align: center; }
 .main-content {
@@ -209,6 +263,11 @@ td { color: var(--text-secondary); }
     </div>
     
     <div class="navbar-right">
+        <!-- Theme Toggle -->
+        <button class="theme-toggle" id="themeToggle">
+            <i class="bi bi-moon-fill" id="themeIcon"></i>
+        </button>
+        
         <!-- Notification Dropdown -->
         <div class="notification-wrapper">
             <button class="notification-bell" id="notificationBell">
@@ -295,6 +354,34 @@ td { color: var(--text-secondary); }
 </div>
 
 <script>
+// === THEME TOGGLE ===
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+const root = document.documentElement;
+
+// Load saved theme or default to dark
+const savedTheme = localStorage.getItem('theme') || 'dark';
+if (savedTheme === 'light') {
+    root.setAttribute('data-theme', 'light');
+    themeIcon.className = 'bi bi-sun-fill';
+}
+
+themeToggle.addEventListener('click', () => {
+    const currentTheme = root.getAttribute('data-theme');
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    
+    if (newTheme === 'light') {
+        root.setAttribute('data-theme', 'light');
+        themeIcon.className = 'bi bi-sun-fill';
+    } else {
+        root.removeAttribute('data-theme');
+        themeIcon.className = 'bi bi-moon-fill';
+    }
+    
+    localStorage.setItem('theme', newTheme);
+    document.body.style.transition = 'background 0.5s ease';
+});
+
 // === SIDEBAR TOGGLE ===
 const sidebarToggle = document.getElementById('sidebarToggle');
 const sidebar = document.getElementById('sidebar');

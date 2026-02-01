@@ -34,6 +34,7 @@ $attendance_rate = $stats['total_classes'] > 0
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 <style>
+/* Dark Theme (Default) */
 :root {
     --primary: #00f5ff;
     --primary-glow: rgba(0, 245, 255, 0.5);
@@ -48,10 +49,69 @@ $attendance_rate = $stats['total_classes'] > 0
     --text-muted: #94a3b8;
     --error: #ff3b3b;
     --success: #00e676;
-    --warning: #ffa500;
     --shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.85);
     --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     --glass-blur: blur(24px) saturate(200%);
+}
+
+/* Light Theme */
+:root[data-theme="light"] {
+    --primary: #8B5E3C;
+    --primary-glow: rgba(139,94,60,0.12);
+    --secondary: #5A8C6F;
+    --accent: #B8956A;
+    --bg-main: linear-gradient(180deg, #f4efe6 0%, #efe7d9 100%);
+    --bg-panel: rgba(255, 255, 255, 0.9);
+    --bg-card: #ffffff;
+    --bg-card-border: rgba(0, 0, 0, 0.06);
+    --text-primary: #3a3a3a;
+    --text-secondary: #5a5a5a;
+    --text-muted: #7a7a7a;
+    --error: #c53030;
+    --success: #3e9f5f;
+    --shadow: 0 12px 30px rgba(15,15,15,0.08);
+    --transition: all 0.3s ease;
+    --glass-blur: blur(8px) saturate(120%);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-main);
+    background-size: 400% 400%;
+    animation: gradientShift 25s ease infinite;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.theme-toggle {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--bg-card-border);
+    color: var(--text-secondary);
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -158,7 +218,7 @@ body {
     width: 38px;
     height: 38px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--secondary), var(--accent));
+    background: var(--primary);
     display: grid;
     place-items: center;
     font-size: 1rem;
@@ -185,9 +245,17 @@ body {
     z-index: 999;
 }
 
-.sidebar.collapsed { transform: translateX(-100%); }
+.sidebar.collapsed {
+    transform: translateX(-100%);
+}
 
-.sidebar-menu { list-style: none; }
+.sidebar-menu {
+    list-style: none;
+}
+
+.sidebar-item {
+    margin-bottom: 0.25rem;
+}
 
 .sidebar-link {
     display: flex;
@@ -206,8 +274,17 @@ body {
     background: rgba(255, 255, 255, 0.04);
 }
 
+:root[data-theme="light"] .sidebar-link.active {
+    background: rgba(139, 94, 60, 0.08);
+}
+
 .sidebar-link:hover {
-    background: rgba(255, 255, 255, 0.02);
+    color: var(--primary);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme="light"] .sidebar-link:hover {
+    background: rgba(139, 94, 60, 0.08);
 }
 
 .sidebar-link i {
@@ -297,6 +374,9 @@ body {
     </div>
     
     <div class="navbar-right">
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+            <i class="bi bi-moon-fill" id="themeIcon"></i>
+        </button>
         <div class="user-menu">
             <span><?php echo htmlspecialchars($_SESSION['prenom'] . ' ' . $_SESSION['nom']); ?></span>
             <div class="user-avatar"><?php echo substr($_SESSION['prenom'], 0, 1); ?></div>
@@ -330,19 +410,19 @@ body {
                 </div>
                 <div style="display:flex;justify-content:space-between;width:100%;max-width:350px;">
                     <div style="text-align:center;">
-                        <div style="font-size:1.1rem;color:var(--text-secondary);">Total Classes</div>
+                        <div style="font-size:1.1rem;color:var(--text-secondary);">Total Classes </div>
                         <div style="font-size:1.5rem;font-weight:700;color:var(--text-primary);margin-top:0.5rem;">
                             <?php echo $stats['total_classes']; ?>
                         </div>
                     </div>
                     <div style="text-align:center;">
-                        <div style="font-size:1.1rem;color:var(--text-secondary);">Absences</div>
+                        <div style="font-size:1.1rem;color:var(--text-secondary);padding-left:6px;">Absences</div>
                         <div style="font-size:1.5rem;font-weight:700;color:var(--error);margin-top:0.5rem;">
                             <?php echo $stats['total_absences']; ?>
                         </div>
                     </div>
                     <div style="text-align:center;">
-                        <div style="font-size:1.1rem;color:var(--text-secondary);">Enrolled Modules</div>
+                        <div style="font-size:1.1rem;color:var(--text-secondary);padding-left:6px;">Enrolled Modules</div>
                         <div style="font-size:1.5rem;font-weight:700;color:var(--primary);margin-top:0.5rem;">
                             <?php echo $stats['total_modules']; ?>
                         </div>
@@ -359,6 +439,38 @@ const sidebar = document.getElementById('sidebar');
 
 sidebarToggle.addEventListener('click', () => {
     sidebar.classList.toggle('collapsed');
+});
+
+// Theme Toggle Functionality
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+const root = document.documentElement;
+
+// Get saved theme or default to 'dark'
+const savedTheme = localStorage.getItem('theme') || 'dark';
+
+// Apply the saved theme on page load
+if (savedTheme === 'light') {
+    root.setAttribute('data-theme', 'light');
+    themeIcon.classList.remove('bi-moon-fill');
+    themeIcon.classList.add('bi-sun-fill');
+}
+
+// Toggle theme on button click
+themeToggle.addEventListener('click', () => {
+    const currentTheme = root.getAttribute('data-theme');
+    
+    if (currentTheme === 'light') {
+        root.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'dark');
+        themeIcon.classList.remove('bi-sun-fill');
+        themeIcon.classList.add('bi-moon-fill');
+    } else {
+        root.setAttribute('data-theme', 'light');
+        localStorage.setItem('theme', 'light');
+        themeIcon.classList.remove('bi-moon-fill');
+        themeIcon.classList.add('bi-sun-fill');
+    }
 });
 </script>
 

@@ -31,6 +31,11 @@
 
         <!-- Right Side Actions -->
         <div class="header-actions">
+            <!-- Theme Toggle -->
+            <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+                <i class="bi bi-moon-fill" id="themeIcon"></i>
+            </button>
+
             <!-- Notification Bell -->
             <div class="notification-wrapper">
                 <button class="notification-bell" id="headerBell">
@@ -145,6 +150,14 @@
     position: relative;
     z-index: 2;
     animation: pulse-logo 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.logo-icon-pulse i {
+    color: white;
+}
+
+:root[data-theme="light"] .logo-icon-pulse i {
+    color: #2b2b2b;
 }
 
 .logo-glow {
@@ -664,7 +677,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -691,7 +704,47 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
         --glass-blur: blur(20px) saturate(180%);
     }
 
+    :root[data-theme="light"] {
+        --primary: #8B5E3C;
+        --primary-glow: rgba(139, 94, 60, 0.12);
+        --secondary: #3B6A47;
+        --accent: #A67C52;
+        --bg-main: #f4efe6;
+        --bg-panel: rgba(255, 255, 255, 0.92);
+        --bg-card: #ffffff;
+        --bg-card-border: rgba(0, 0, 0, 0.08);
+        --text-primary: #2b2b2b;
+        --text-secondary: #4b4b4b;
+        --text-muted: #6b6b6b;
+        --error: #A67B6E;
+        --success: #7A9E7D;
+        --shadow: 0 20px 40px rgba(15, 15, 15, 0.08);
+        --transition: all 0.3s ease;
+        --glass-blur: blur(10px) saturate(120%);
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    .theme-toggle {
+        position: relative;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--bg-card-border);
+        color: var(--text-secondary);
+        padding: 0.55rem 0.85rem;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        margin-right: 1rem;
+    }
+
+    .theme-toggle:hover {
+        background: rgba(0, 245, 255, 0.1);
+        border-color: var(--primary);
+        color: var(--primary);
+    }
     html { scroll-behavior: smooth; }
     body {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -840,6 +893,11 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
         40% { clip-path: inset(0 0 50% 0); transform: translate(-2px, 2px); }
         60% { clip-path: inset(50% 0 0 0); transform: translate(2px, -2px); }
         80% { clip-path: inset(20% 0 0 0); transform: translate(-2px, 0); }
+    }
+
+    :root[data-theme="light"] .hero h1::before,
+    :root[data-theme="light"] .hero h1::after {
+        animation: none;
     }
 
     .hero-subtitle {
@@ -1278,12 +1336,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
             </div>
             <span class="logo-text">macademia</span>
         </a>
-        <div class="nav-links">
-            <a href="#features" class="nav-link">Academy</a>
-            <a href="#testimonials" class="nav-link">Legacy</a>
-            <a href="#video" class="nav-link">Experience</a>
-            <a href="login.php" class="nav-link nav-cta">Log In</a>
-        </div>
+        
     </div>
 </nav>
 
@@ -1300,7 +1353,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
             Where tradition meets singularity. Experience the academic management platform that shapes tomorrow's leaders.
         </p>
         <a href="requestacc.php" class="cta-button" id="mainCta">
-            <span>Initialize Journey</span>
+            <span>Request Access</span>
             <i class="bi bi-arrow-right"></i>
         </a>
     </div>
@@ -1413,7 +1466,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
         <h2>Your Legacy Awaits</h2>
         <p>Initialize your access to the singularity. Join the consciousness that shapes realities.</p>
         <a href="requestacc.php" class="cta-button">
-            <span>Request Singularity Access</span>
+            <span>Request Access</span>
             <i class="bi bi-key-fill"></i>
         </a>
     </div>
@@ -1732,6 +1785,36 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 window.addEventListener('resize', () => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+});
+
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+const root = document.documentElement;
+const savedTheme = localStorage.getItem('theme');
+
+if (savedTheme === 'light') {
+    root.setAttribute('data-theme', 'light');
+    themeIcon.classList.remove('bi-moon-fill');
+    themeIcon.classList.add('bi-brightness-high-fill');
+} else {
+    root.removeAttribute('data-theme');
+    themeIcon.classList.remove('bi-brightness-high-fill');
+    themeIcon.classList.add('bi-moon-fill');
+}
+
+themeToggle.addEventListener('click', () => {
+    const currentTheme = root.getAttribute('data-theme');
+    if (currentTheme === 'light') {
+        root.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'dark');
+        themeIcon.classList.remove('bi-brightness-high-fill');
+        themeIcon.classList.add('bi-moon-fill');
+    } else {
+        root.setAttribute('data-theme', 'light');
+        localStorage.setItem('theme', 'light');
+        themeIcon.classList.remove('bi-moon-fill');
+        themeIcon.classList.add('bi-brightness-high-fill');
+    }
 });
 </script>
 </body>

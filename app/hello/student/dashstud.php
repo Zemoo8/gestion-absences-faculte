@@ -4,6 +4,9 @@ if (!defined('BASE_PATH')) {
     require_once __DIR__ . '/../../../bootstrap.php';
 }
 
+// Load avatar helper
+require_once __DIR__ . '/../../models/AvatarHelper.php';
+
 // If this view is opened directly, redirect to the front-controller student route
 if (basename($_SERVER['SCRIPT_NAME']) !== 'index.php') {
     $base = defined('PUBLIC_URL') ? PUBLIC_URL : ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
@@ -21,6 +24,9 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'student'){
 }
 
 $student_id = $_SESSION['user_id'];
+
+// Get student info including photo
+$student_info = $mysqli->query("SELECT nom, prenom, photo_path FROM users WHERE id = $student_id")->fetch_assoc();
 
 // Student stats
 $stats_result = $mysqli->query("SELECT 
@@ -83,6 +89,7 @@ $days = [1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 <style>
+/* Dark Theme (Default) */
 :root {
     --primary: #00f5ff;
     --primary-glow: rgba(0, 245, 255, 0.5);
@@ -97,10 +104,68 @@ $days = [1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 
     --text-muted: #94a3b8;
     --error: #ff3b3b;
     --success: #00e676;
-    --warning: #ffa500;
     --shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.85);
     --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     --glass-blur: blur(24px) saturate(200%);
+}
+
+/* Light Theme */
+:root[data-theme="light"] {
+    --primary: #8B5E3C;
+    --primary-glow: rgba(139,94,60,0.12);
+    --secondary: #5A8C6F;
+    --accent: #B8956A;
+    --bg-main: linear-gradient(180deg, #f4efe6 0%, #efe7d9 100%);
+    --bg-panel: rgba(255, 255, 255, 0.9);
+    --bg-card: #ffffff;
+    --bg-card-border: rgba(0, 0, 0, 0.06);
+    --text-primary: #3a3a3a;
+    --text-secondary: #5a5a5a;
+    --text-muted: #7a7a7a;
+    --error: #c53030;
+    --success: #3e9f5f;
+    --shadow: 0 12px 30px rgba(15,15,15,0.08);
+    --transition: all 0.3s ease;
+    --glass-blur: blur(8px) saturate(120%);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-main);
+    background-size: 400% 400%;
+    animation: gradientShift 25s ease infinite;
+    color: var(--text-primary);
+    overflow-x: hidden;
+}
+
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.theme-toggle {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--bg-card-border);
+    color: var(--text-secondary);
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -207,7 +272,7 @@ body {
     width: 38px;
     height: 38px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--secondary), var(--accent));
+    background: var(--primary);
     display: grid;
     place-items: center;
     font-size: 1rem;
@@ -234,9 +299,17 @@ body {
     z-index: 999;
 }
 
-.sidebar.collapsed { transform: translateX(-100%); }
+.sidebar.collapsed {
+    transform: translateX(-100%);
+}
 
-.sidebar-menu { list-style: none; }
+.sidebar-menu {
+    list-style: none;
+}
+
+.sidebar-item {
+    margin-bottom: 0.25rem;
+}
 
 .sidebar-link {
     display: flex;
@@ -255,8 +328,17 @@ body {
     background: rgba(255, 255, 255, 0.04);
 }
 
+:root[data-theme="light"] .sidebar-link.active {
+    background: rgba(139, 94, 60, 0.08);
+}
+
 .sidebar-link:hover {
-    background: rgba(255, 255, 255, 0.02);
+    color: var(--primary);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme="light"] .sidebar-link:hover {
+    background: rgba(139, 94, 60, 0.08);
 }
 
 .sidebar-link i {
@@ -300,16 +382,6 @@ body {
     box-shadow: var(--shadow);
     position: relative;
     overflow: hidden;
-}
-
-.chatbot-placeholder::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--primary), var(--accent));
 }
 
 .chatbot-icon {
@@ -482,9 +554,20 @@ body {
     </div>
     
     <div class="navbar-right">
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+            <i class="bi bi-moon-fill" id="themeIcon"></i>
+        </button>
         <div class="user-menu">
             <span><?php echo htmlspecialchars($_SESSION['prenom'] . ' ' . $_SESSION['nom']); ?></span>
-            <div class="user-avatar"><?php echo substr($_SESSION['prenom'], 0, 1); ?></div>
+            <?php 
+            $photo = isset($student_info['photo_path']) ? $student_info['photo_path'] : null;
+            if($photo && file_exists(__DIR__ . '/../../../public/' . $photo)): 
+                $public_url = defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost';
+            ?>
+                <img src="<?php echo $public_url . '/' . htmlspecialchars($photo); ?>" alt="Profile" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; object-position: center;">
+            <?php else: ?>
+                <div class="user-avatar"><?php echo substr($_SESSION['prenom'], 0, 1); ?></div>
+            <?php endif; ?>
         </div>
     </div>
 </nav>
@@ -506,7 +589,7 @@ body {
         <div class="chatbot-placeholder" style="width:100%;max-width:900px;height:600px;background:var(--bg-card);backdrop-filter:var(--glass-blur);border:1px solid var(--bg-card-border);border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.5rem;box-shadow:var(--shadow);position:relative;overflow:hidden;">
             <div style="width:100%;padding:0 2.5rem;">
                 <div style="display:flex;align-items:center;gap:1.5rem;margin-bottom:2rem;">
-                    <div style="width:80px;height:80px;background:linear-gradient(135deg,var(--primary),var(--accent));border-radius:50%;display:grid;place-items:center;font-size:3rem;box-shadow:0 0 30px var(--primary-glow);">🤖</div>
+                    <div style="width:80px;height:80px;background:var(--primary);border-radius:50%;display:grid;place-items:center;font-size:3rem;box-shadow:0 0 30px var(--primary-glow);">🤖</div>
                     <h2 style="font-size:2.5rem;font-weight:800;background:linear-gradient(135deg,var(--text-primary),var(--primary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0;">Student Assistant</h2>
                 </div>
                 <div id="chatLog" style="height:370px;overflow-y:auto;background:rgba(255,255,255,0.03);border-radius:16px;padding:1.2rem;margin-bottom:2rem;box-shadow:0 2px 8px rgba(0,0,0,0.10);font-size:1.25rem;">
@@ -519,7 +602,7 @@ body {
                 </div>
                 <div class="input-wrapper" style="display:flex;gap:16px;">
                     <input type="text" id="userMessage" placeholder="Type your question here..." style="flex:1;padding:22px 28px;border:2px solid var(--bg-card-border);border-radius:32px;font-size:1.35rem;background:var(--bg-panel);color:var(--text-primary);outline:none;transition:border-color 0.3s;" onkeypress="handleEnter(event)">
-                    <button id="sendBtn" style="padding:22px 40px;background:linear-gradient(135deg,var(--primary) 0%,var(--secondary) 100%);color:white;border:none;border-radius:32px;cursor:pointer;font-size:1.35rem;font-weight:800;transition:transform 0.2s,box-shadow 0.2s;" onclick="sendMessage()">Send</button>
+                    <button id="sendBtn" style="padding:22px 40px;background:var(--primary);color:white;border:none;border-radius:32px;cursor:pointer;font-size:1.35rem;font-weight:800;transition:transform 0.2s,box-shadow 0.2s;" onclick="sendMessage()">Send</button>
                 </div>
             </div>
         </div>
@@ -680,6 +763,38 @@ const sidebar = document.getElementById('sidebar');
 
 sidebarToggle.addEventListener('click', () => {
     sidebar.classList.toggle('collapsed');
+});
+
+// Theme Toggle Functionality
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+const root = document.documentElement;
+
+// Get saved theme or default to 'dark'
+const savedTheme = localStorage.getItem('theme') || 'dark';
+
+// Apply the saved theme on page load
+if (savedTheme === 'light') {
+    root.setAttribute('data-theme', 'light');
+    themeIcon.classList.remove('bi-moon-fill');
+    themeIcon.classList.add('bi-sun-fill');
+}
+
+// Toggle theme on button click
+themeToggle.addEventListener('click', () => {
+    const currentTheme = root.getAttribute('data-theme');
+    
+    if (currentTheme === 'light') {
+        root.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'dark');
+        themeIcon.classList.remove('bi-sun-fill');
+        themeIcon.classList.add('bi-moon-fill');
+    } else {
+        root.setAttribute('data-theme', 'light');
+        localStorage.setItem('theme', 'light');
+        themeIcon.classList.remove('bi-moon-fill');
+        themeIcon.classList.add('bi-sun-fill');
+    }
 });
 </script>
 

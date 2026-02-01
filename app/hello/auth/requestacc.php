@@ -3,7 +3,7 @@
 if (!defined('BASE_PATH')) {
     require_once __DIR__ . '/../../../bootstrap.php';
 }
-
+global $mysqli;
 // PHPMailer files
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -13,6 +13,12 @@ require 'PHPMailer/src/SMTP.php';
 
 $success = '';
 $error = '';
+
+// Photo upload configuration
+$upload_dir = __DIR__ . '/../../../public/assets/uploads/profiles/';
+$allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+$max_size = 5 * 1024 * 1024; // 5MB
+$photo_path = NULL;
 
 if($_SERVER["REQUEST_METHOD"] == "POST") {
     $nom = trim($_POST['nom']);
@@ -25,60 +31,87 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
     } elseif(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Please enter a valid email address.";
     } else {
-        $stmt = $mysqli->prepare("SELECT id FROM account_requests WHERE email=?");
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $stmt->store_result();
-
-        if($stmt->num_rows > 0) {
-            $error = "An account request for this email already exists. Please wait for approval.";
-        } else {
-            $stmt = $mysqli->prepare("INSERT INTO account_requests (nom, prenom, email, status, created_at) VALUES (?, ?, ?, 'pending', NOW())");
-            $stmt->bind_param("sss", $nom, $prenom, $email);
-
-            if($stmt->execute()) {
-                $success = "Request submitted successfully! We'll contact you at <strong>" . htmlspecialchars($email) . "</strong> within 24-48 hours with your account details.";
-
-                // Send email notification
-                $mail = new PHPMailer(true);
-                try {
-                    $mail->isSMTP();
-                    $mail->Host = 'smtp.gmail.com';
-                    $mail->SMTPAuth = true;
-                    $mail->Username = 'farouk.zemoo@gmail.com';
-                    $mail->Password = 'kibh ehzs ofxg zpem';
-                    $mail->SMTPSecure = 'tls';
-                    $mail->Port = 587;
-
-                    $mail->setFrom('farouk.zemoo@gmail.com', 'macademia Faculty System');
-                    $mail->addAddress('farouk.zemoo@gmail.com');
-                    $mail->addReplyTo($email, "$nom $prenom");
-
-                    $mail->isHTML(true);
-                    $mail->Subject = 'New Faculty Account Request';
-                    $admin_link = (defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost') . '/index.php/admindash';
-                    $mail->Body = "
-                        <h2>New Account Request</h2>
-                        <p><strong>Name:</strong> " . htmlspecialchars($nom) . " " . htmlspecialchars($prenom) . "</p>
-                        <p><strong>Email:</strong> " . htmlspecialchars($email) . "</p>
-                        <p><strong>Submitted:</strong> " . date('Y-m-d H:i:s') . "</p>
-                        <hr>
-                        <p><a href='" . $admin_link . "'>Create his account</a></p>
-                    ";
+        // Handle photo upload
+        if(isset($_FILES['photo']) && $_FILES['photo']['error'] !== UPLOAD_ERR_NO_FILE) {
+            if($_FILES['photo']['error'] === UPLOAD_ERR_OK) {
+                if($_FILES['photo']['size'] > $max_size) {
+                    $error = "Photo size must be less than 5MB.";
+                } elseif(!in_array($_FILES['photo']['type'], $allowed_types)) {
+                    $error = "Please upload a valid image (JPG, PNG, GIF, or WebP).";
+                } else {
+                    // Generate unique filename
+                    $ext = pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION);
+                    $filename = uniqid('profile_') . '_' . time() . '.' . $ext;
+                    $file_path = $upload_dir . $filename;
                     
-                    $mail->send();
-                } catch (Exception $e) {
-                    error_log("Email failed: " . $mail->ErrorInfo);
+                    if(move_uploaded_file($_FILES['photo']['tmp_name'], $file_path)) {
+                        $photo_path = 'assets/uploads/profiles/' . $filename;
+                    } else {
+                        $error = "Failed to upload photo. Please try again.";
+                    }
                 }
             } else {
-                $error = "Failed to submit request. Please try again later.";
+                $error = "Photo upload error. Please try again.";
+            }
+        }
+        
+        // Only proceed if no upload error
+        if(empty($error)) {
+            $stmt = $mysqli->prepare("SELECT id FROM account_requests WHERE email=?");
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+            $stmt->store_result();
+
+            if($stmt->num_rows > 0) {
+                $error = "An account request for this email already exists. Please wait for approval.";
+            } else {
+                $stmt = $mysqli->prepare("INSERT INTO account_requests (nom, prenom, email, photo_path, status, created_at) VALUES (?, ?, ?, ?, 'pending', NOW())");
+                $stmt->bind_param("ssss", $nom, $prenom, $email, $photo_path);
+
+                if($stmt->execute()) {
+                    $success = "Request submitted successfully! We'll contact you at <strong>" . htmlspecialchars($email) . "</strong> within 24-48 hours with your account details.";
+
+                    // Send email notification
+                    $mail = new PHPMailer(true);
+                    try {
+                        $mail->isSMTP();
+                        $mail->Host = 'smtp.gmail.com';
+                        $mail->SMTPAuth = true;
+                        $mail->Username = 'farouk.zemoo@gmail.com';
+                        $mail->Password = 'kibh ehzs ofxg zpem';
+                        $mail->SMTPSecure = 'tls';
+                        $mail->Port = 587;
+
+                        $mail->setFrom('farouk.zemoo@gmail.com', 'macademia Faculty System');
+                        $mail->addAddress('farouk.zemoo@gmail.com');
+                        $mail->addReplyTo($email, "$nom $prenom");
+
+                        $mail->isHTML(true);
+                        $mail->Subject = 'New Faculty Account Request';
+                        $admin_link = (defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost') . '/index.php/admindash';
+                        $mail->Body = "
+                            <h2>New Account Request</h2>
+                            <p><strong>Name:</strong> " . htmlspecialchars($nom) . " " . htmlspecialchars($prenom) . "</p>
+                            <p><strong>Email:</strong> " . htmlspecialchars($email) . "</p>
+                            <p><strong>Submitted:</strong> " . date('Y-m-d H:i:s') . "</p>
+                            <hr>
+                            <p><a href='" . $admin_link . "'>Create his account</a></p>
+                        ";
+                        
+                        $mail->send();
+                    } catch (Exception $e) {
+                        error_log("Email failed: " . $mail->ErrorInfo);
+                    }
+                } else {
+                    $error = "Failed to submit request. Please try again later.";
+                }
             }
         }
     }
 }
 ?>
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -105,7 +138,52 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
         --glass-blur: blur(24px) saturate(200%);
     }
 
+    :root[data-theme="light"] {
+        --primary: #8B5E3C;
+        --primary-glow: rgba(139, 94, 60, 0.12);
+        --secondary: #3B6A47;
+        --accent: #A67C52;
+        --bg-main: linear-gradient(180deg, #f4efe6 0%, #efe7d9 100%);
+        --bg-panel: rgba(255, 255, 255, 0.9);
+        --bg-card: #ffffff;
+        --bg-card-border: rgba(0, 0, 0, 0.06);
+        --text-primary: #2b2b2b;
+        --text-secondary: #4b4b4b;
+        --text-muted: #6b6b6b;
+        --error: #A67B6E;
+        --success: #7A9E7D;
+        --shadow: 0 12px 30px rgba(15, 15, 15, 0.08);
+        --transition: all 0.3s ease;
+        --glass-blur: blur(8px) saturate(120%);
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    .theme-toggle {
+        position: fixed;
+        top: 1.5rem;
+        right: 1.5rem;
+        z-index: 10;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid var(--bg-card-border);
+        color: var(--text-secondary);
+        padding: 0.55rem 0.85rem;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: var(--transition);
+        backdrop-filter: var(--glass-blur);
+    }
+
+    .theme-toggle:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: var(--primary);
+        color: var(--primary);
+        transform: translateY(-2px);
+    }
 
     body {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -318,23 +396,6 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
         position: relative;
     }
 
-    .form-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, var(--primary), var(--accent));
-        opacity: 0.6;
-        transition: var(--transition);
-    }
-
-    .form-card:hover::before {
-        opacity: 1;
-        height: 6px;
-    }
-
     .form-header {
         text-align: center;
         margin-bottom: 2.5rem;
@@ -420,6 +481,17 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
         background: rgba(15, 23, 42, 0.7);
     }
 
+    :root[data-theme="light"] .form-control {
+        background: rgba(255, 255, 255, 0.9);
+        border-color: rgba(0, 0, 0, 0.08);
+        color: var(--text-primary);
+    }
+
+    :root[data-theme="light"] .form-control:focus {
+        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(139, 94, 60, 0.12);
+    }
+
     .form-control::placeholder {
         color: transparent;
     }
@@ -444,6 +516,11 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
         color: var(--primary);
         background: rgba(15, 23, 42, 0.9);
         border-radius: 4px;
+    }
+
+    :root[data-theme="light"] .form-control:focus ~ .form-label,
+    :root[data-theme="light"] .form-control:not(:placeholder-shown) ~ .form-label {
+        background: #f4efe6;
     }
 
     .form-control.is-invalid {
@@ -638,9 +715,92 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
         from { opacity: 0; }
         to { opacity: 1; }
     }
+
+    /* === PHOTO UPLOAD STYLES === */
+    .photo-upload-wrapper {
+        position: relative;
+    }
+
+    .photo-input {
+        display: none;
+    }
+
+    .photo-label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 2rem 1.5rem;
+        border: 2px dashed var(--primary);
+        border-radius: 12px;
+        background: rgba(0, 245, 255, 0.05);
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .photo-label:hover {
+        background: rgba(0, 245, 255, 0.1);
+        border-color: var(--accent);
+    }
+
+    .photo-label i {
+        font-size: 2rem;
+        color: var(--primary);
+    }
+
+    .upload-text {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .photo-label small {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+    }
+
+    .photo-preview {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.5rem;
+        background: rgba(0, 245, 255, 0.05);
+        border: 1px solid var(--primary);
+        border-radius: 12px;
+        margin-top: 1rem;
+    }
+
+    .photo-preview img {
+        max-width: 150px;
+        max-height: 150px;
+        border-radius: 10px;
+        object-fit: cover;
+    }
+
+    .remove-photo {
+        background: rgba(255, 59, 59, 0.1);
+        color: #ff3b3b;
+        border: 1px solid #ff3b3b;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .remove-photo:hover {
+        background: rgba(255, 59, 59, 0.2);
+    }
 </style>
 </head>
 <body>
+<button class="theme-toggle" id="themeToggle" title="Toggle theme">
+    <i class="bi bi-moon-fill" id="themeIcon"></i>
+</button>
 
 <div class="particles">
     <div class="particle"></div>
@@ -707,7 +867,6 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
 
         <div class="contact-info">
-            <p><i class="bi bi-info-circle"></i> Already have an account? <a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/login/login">Sign in here</a></p>
         </div>
     </div>
 
@@ -735,7 +894,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
             </div>
             <?php endif; ?>
 
-            <form method="POST" id="requestForm" novalidate>
+            <form method="POST" id="requestForm" enctype="multipart/form-data" novalidate>
                 <div class="form-group">
                     <input type="text" id="nom" name="nom" class="form-control" placeholder=" " required autofocus>
                     <label for="nom" class="form-label">First Name</label>
@@ -752,6 +911,23 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
                     <small class="form-text" style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem; display: block;">We'll send your account details here</small>
                 </div>
 
+                <div class="form-group">
+                    <div class="photo-upload-wrapper">
+                        <input type="file" id="photo" name="photo" class="photo-input" accept="image/*">
+                        <label for="photo" class="photo-label">
+                            <i class="bi bi-cloud-upload"></i>
+                            <span class="upload-text">Upload Your Photo</span>
+                            <small>JPG, PNG, GIF or WebP (Max 5MB)</small>
+                        </label>
+                        <div class="photo-preview" id="photoPreview" style="display: none;">
+                            <img id="previewImg" alt="Photo Preview">
+                            <button type="button" class="remove-photo" onclick="removePhoto()">
+                                <i class="bi bi-x-circle"></i> Remove
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <button type="submit" class="btn-submit">
                     <span class="btn-text">Submit Request</span>
 
@@ -764,12 +940,52 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
                 <p>Your request will be reviewed by our admin team</p>
 
                 <p><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/login/login"><i class="bi bi-arrow-left"></i> Back to Login</a></p>
+                <p><i class="bi bi-info-circle"></i> Already have an account? <a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/login/login">Sign in here</a></p>
             </div>
         </div>
     </div>
 </div>
 
 <script>
+    // Photo preview
+    const photoInput = document.getElementById('photo');
+    const photoLabel = document.querySelector('.photo-label');
+    const photoPreview = document.getElementById('photoPreview');
+
+    photoInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if(file) {
+            const fileSize = file.size / (1024 * 1024); // Convert to MB
+            
+            if(fileSize > 5) {
+                alert('Photo size must be less than 5MB');
+                photoInput.value = '';
+                return;
+            }
+
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if(!validTypes.includes(file.type)) {
+                alert('Please upload a valid image (JPG, PNG, GIF, or WebP)');
+                photoInput.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                document.getElementById('previewImg').src = event.target.result;
+                photoPreview.style.display = 'flex';
+                photoLabel.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    window.removePhoto = function() {
+        photoInput.value = '';
+        photoPreview.style.display = 'none';
+        photoLabel.style.display = 'flex';
+    };
+
     const form = document.getElementById('requestForm');
     const submitBtn = form.querySelector('.btn-submit');
     
@@ -835,8 +1051,37 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         });
     });
-                <script>
-                setTimeout(() => {
-                    window.location.href = '<?php echo defined("PUBLIC_URL") ? PUBLIC_URL : "http://localhost"; ?>/index.php/';
-                }, 3000);
-            </script>
+
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const root = document.documentElement;
+    const savedTheme = localStorage.getItem('theme');
+
+    if (savedTheme === 'light') {
+        root.setAttribute('data-theme', 'light');
+        themeIcon.classList.remove('bi-moon-fill');
+        themeIcon.classList.add('bi-sun-fill');
+    } else {
+        root.removeAttribute('data-theme');
+        themeIcon.classList.remove('bi-sun-fill');
+        themeIcon.classList.add('bi-moon-fill');
+    }
+
+    themeToggle.addEventListener('click', () => {
+        const currentTheme = root.getAttribute('data-theme');
+        if (currentTheme === 'light') {
+            root.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'dark');
+            themeIcon.classList.remove('bi-sun-fill');
+            themeIcon.classList.add('bi-moon-fill');
+        } else {
+            root.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+            themeIcon.classList.remove('bi-moon-fill');
+            themeIcon.classList.add('bi-sun-fill');
+        }
+    });
+</script>
+
+</body>
+</html>

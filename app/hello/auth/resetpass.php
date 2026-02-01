@@ -53,44 +53,68 @@ if(isset($_GET['token'])){
 ?>
 
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Reset Password | EduPortal</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 <style>
+:root {
+    --primary: #00f5ff;
+    --primary-glow: rgba(0, 245, 255, 0.3);
+    --accent: #ff0080;
+    --bg-main: linear-gradient(135deg, #0f172a, #1e293b, #334155);
+    --bg-card: rgba(15,23,42,0.7);
+    --text-primary: #f8fafc;
+    --input-bg: rgba(255,255,255,0.05);
+    --input-border: rgba(255,255,255,0.2);
+    --shadow: 0 15px 50px rgba(0,0,0,0.6);
+}
+
+:root[data-theme="light"] {
+    --primary: #8B5E3C;
+    --primary-glow: rgba(139, 94, 60, 0.2);
+    --accent: #A67C52;
+    --bg-main: linear-gradient(180deg, #f4efe6 0%, #efe7d9 100%);
+    --bg-card: #ffffff;
+    --text-primary: #2b2b2b;
+    --input-bg: #ffffff;
+    --input-border: rgba(0,0,0,0.12);
+    --shadow: 0 12px 30px rgba(15,15,15,0.08);
+}
+
 body { 
     min-height: 100vh; 
     display: flex; 
     justify-content: center; 
     align-items: center; 
     font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #0f172a, #1e293b, #334155);
-    color: #f8fafc;
+    background: var(--bg-main);
+    color: var(--text-primary);
 }
 .card {
     backdrop-filter: blur(12px);
-    background: rgba(15,23,42,0.7);
+    background: var(--bg-card);
     border-radius: 20px;
     padding: 2.5rem;
     width: 400px;
-    box-shadow: 0 15px 50px rgba(0,0,0,0.6);
+    box-shadow: var(--shadow);
 }
 h2 { margin-bottom: 1rem; }
 input.form-control {
     border-radius: 12px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.2);
-    color: #f8fafc;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--text-primary);
 }
 input.form-control:focus {
-    border-color: #00f5ff;
-    box-shadow: 0 0 10px rgba(0,245,255,0.3);
-    background: rgba(15,23,42,0.6);
+    border-color: var(--primary);
+    box-shadow: 0 0 10px var(--primary-glow);
 }
 button {
-    background: linear-gradient(135deg, #00f5ff, #ff0080);
+    background: linear-gradient(135deg, var(--primary), var(--accent));
     border: none;
     color: white;
     width: 100%;
@@ -99,11 +123,39 @@ button {
     font-weight: 600;
     transition: 0.3s;
 }
-button:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,245,255,0.5);}
+button:hover { transform: translateY(-2px); box-shadow: 0 10px 30px var(--primary-glow);}
 .alert { border-radius: 12px; }
+
+.theme-toggle {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid var(--input-border);
+    color: var(--text-primary);
+    padding: 0.55rem 0.85rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: 0.3s;
+    backdrop-filter: blur(8px) saturate(120%);
+}
+
+.theme-toggle:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
+}
 </style>
 </head>
 <body>
+<button class="theme-toggle" id="themeToggle" title="Toggle theme">
+    <i class="bi bi-moon-fill" id="themeIcon"></i>
+</button>
 
 <div class="card">
     <h2>Reset Password</h2>
@@ -117,6 +169,38 @@ button:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,245,2
     </form>
     <?php endif; ?>
 </div>
+
+<script>
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+const root = document.documentElement;
+const savedTheme = localStorage.getItem('theme');
+
+if (savedTheme === 'light') {
+    root.setAttribute('data-theme', 'light');
+    themeIcon.classList.remove('bi-moon-fill');
+    themeIcon.classList.add('bi-sun-fill');
+} else {
+    root.removeAttribute('data-theme');
+    themeIcon.classList.remove('bi-sun-fill');
+    themeIcon.classList.add('bi-moon-fill');
+}
+
+themeToggle.addEventListener('click', () => {
+    const currentTheme = root.getAttribute('data-theme');
+    if (currentTheme === 'light') {
+        root.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'dark');
+        themeIcon.classList.remove('bi-sun-fill');
+        themeIcon.classList.add('bi-moon-fill');
+    } else {
+        root.setAttribute('data-theme', 'light');
+        localStorage.setItem('theme', 'light');
+        themeIcon.classList.remove('bi-moon-fill');
+        themeIcon.classList.add('bi-sun-fill');
+    }
+});
+</script>
 
 </body>
 </html>

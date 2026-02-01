@@ -11,13 +11,14 @@ $student_id = $_SESSION['user_id'];
 $absences = $mysqli->query("SELECT m.module_name, COUNT(*) as count FROM attendance a JOIN modules m ON a.module_id = m.id WHERE a.student_id = $student_id AND a.status = 'absent' GROUP BY m.module_name");
 ?>
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>My Absences | macademia Faculty</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 <style>
+/* Dark Theme (Default) */
 :root {
     --primary: #00f5ff;
     --primary-glow: rgba(0, 245, 255, 0.5);
@@ -32,10 +33,69 @@ $absences = $mysqli->query("SELECT m.module_name, COUNT(*) as count FROM attenda
     --text-muted: #94a3b8;
     --error: #ff3b3b;
     --success: #00e676;
-    --warning: #ffa500;
     --shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.85);
     --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     --glass-blur: blur(24px) saturate(200%);
+}
+
+/* Light Theme */
+:root[data-theme="light"] {
+    --primary: #8B5E3C;
+    --primary-glow: rgba(139,94,60,0.12);
+    --secondary: #5A8C6F;
+    --accent: #B8956A;
+    --bg-main: linear-gradient(180deg, #f4efe6 0%, #efe7d9 100%);
+    --bg-panel: rgba(255, 255, 255, 0.9);
+    --bg-card: #ffffff;
+    --bg-card-border: rgba(0, 0, 0, 0.06);
+    --text-primary: #3a3a3a;
+    --text-secondary: #5a5a5a;
+    --text-muted: #7a7a7a;
+    --error: #A67B6E;
+    --success: #7A9E7D;
+    --shadow: 0 12px 30px rgba(15,15,15,0.08);
+    --transition: all 0.3s ease;
+    --glass-blur: blur(8px) saturate(120%);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-main);
+    background-size: 400% 400%;
+    animation: gradientShift 25s ease infinite;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.theme-toggle {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--bg-card-border);
+    color: var(--text-secondary);
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -142,7 +202,7 @@ body {
     width: 38px;
     height: 38px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--secondary), var(--accent));
+    background: var(--primary);
     display: grid;
     place-items: center;
     font-size: 1rem;
@@ -169,9 +229,17 @@ body {
     z-index: 999;
 }
 
-.sidebar.collapsed { transform: translateX(-100%); }
+.sidebar.collapsed {
+    transform: translateX(-100%);
+}
 
-.sidebar-menu { list-style: none; }
+.sidebar-menu {
+    list-style: none;
+}
+
+.sidebar-item {
+    margin-bottom: 0.25rem;
+}
 
 .sidebar-link {
     display: flex;
@@ -190,8 +258,17 @@ body {
     background: rgba(255, 255, 255, 0.04);
 }
 
+:root[data-theme="light"] .sidebar-link.active {
+    background: rgba(139, 94, 60, 0.08);
+}
+
 .sidebar-link:hover {
-    background: rgba(255, 255, 255, 0.02);
+    color: var(--primary);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme="light"] .sidebar-link:hover {
+    background: rgba(139, 94, 60, 0.08);
 }
 
 .sidebar-link i {
@@ -281,6 +358,9 @@ body {
     </div>
     
     <div class="navbar-right">
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+            <i class="bi bi-moon-fill" id="themeIcon"></i>
+        </button>
         <div class="user-menu">
             <span><?php echo htmlspecialchars($_SESSION['prenom'] . ' ' . $_SESSION['nom']); ?></span>
             <div class="user-avatar"><?php echo substr($_SESSION['prenom'], 0, 1); ?></div>
@@ -300,22 +380,22 @@ body {
     </aside>
 
     <main class="main-content">
-        <div class="info-card" style="margin-bottom:2.5rem;background:linear-gradient(135deg,#ff3b3b22 0%,#00f5ff22 100%);box-shadow:0 8px 32px rgba(0,0,0,0.18);">
+        <div class="info-card" style="margin-bottom:2.5rem;background:linear-gradient(135deg,var(--primary-glow),rgba(90,140,111,0.12));box-shadow:0 8px 32px rgba(0,0,0,0.18);">
             <div style="display:flex;align-items:center;gap:1.5rem;width:100%;">
-                <div style="width:70px;height:70px;background:linear-gradient(135deg,#ff3b3b,#00f5ff);border-radius:50%;display:grid;place-items:center;font-size:2.2rem;box-shadow:0 0 30px #ff3b3b44;">
+                <div style="width:70px;height:70px;background:var(--primary);border-radius:50%;display:grid;place-items:center;font-size:2.2rem;box-shadow:0 0 30px var(--primary-glow);">
                     <i class="bi bi-exclamation-circle" style="color:white;"></i>
                 </div>
                 <div>
-                    <h1 style="font-size:2rem;font-weight:900;margin:0;color:#ff3b3b;letter-spacing:-1px;">My Absences</h1>
-                    <div style="color:#cbd5e1;font-size:1.1rem;margin-top:0.3rem;">Track your absences by module and stay on top of your academic progress. Every day counts!</div>
+                    <h1 style="font-size:2rem;font-weight:900;margin:0;color:var(--primary);letter-spacing:-1px;">My Absences</h1>
+                    <div style="color:var(--text-secondary);font-size:1.1rem;margin-top:0.3rem;">Review your absence records and stay informed about your attendance status.</div>
                 </div>
             </div>
         </div>
         <div class="info-card" style="margin-bottom:2.5rem;">
-            <h3 style="font-size:1.3rem;font-weight:700;color:#ff3b3b;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-bar-chart"></i> Absence Overview</h3>
+            <h3 style="font-size:1.3rem;font-weight:700;color:var(--primary);margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-bar-chart"></i> Absence Overview</h3>
             <?php if($absences && $absences->num_rows > 0): ?>
-                <div style="width:100%;margin-bottom:2rem;">
-                    <svg width="100%" height="120">
+                <div style="width:100%;margin-bottom:2rem;overflow-x:auto;">
+                    <svg width="100%" height="320" viewBox="0 0 800 320" style="min-width:600px;">
                         <?php 
                         $max = 0;
                         $bars = [];
@@ -323,36 +403,37 @@ body {
                             $bars[] = $row;
                             if($row['count'] > $max) $max = $row['count'];
                         }
-                        $barWidth = 50;
-                        $gap = 30;
+                        $barWidth = 80;
+                        $gap = 70;
+                        $totalWidth = count($bars) * ($barWidth + $gap);
                         foreach($bars as $i => $row):
-                            $x = $i * ($barWidth + $gap);
-                            $height = $max ? ($row['count'] / $max * 90) : 0;
+                            $x = $i * ($barWidth + $gap) + 40;
+                            $height = $max ? ($row['count'] / $max * 180) : 0;
                         ?>
-                        <rect x="<?php echo $x; ?>" y="<?php echo 100-$height; ?>" width="<?php echo $barWidth; ?>" height="<?php echo $height; ?>" fill="#ff3b3b" rx="8" style="filter:drop-shadow(0 2px 12px #ff3b3b44);transition:height 0.7s;" />
-                        <text x="<?php echo $x + $barWidth/2; ?>" y="115" text-anchor="middle" font-size="1rem" fill="#f0f4f8"><?php echo htmlspecialchars($row['module_name']); ?></text>
-                        <text x="<?php echo $x + $barWidth/2; ?>" y="<?php echo 100-$height-8; ?>" text-anchor="middle" font-size="1.1rem" fill="#00f5ff" style="font-weight:700;"><?php echo $row['count']; ?></text>
+                        <rect x="<?php echo $x; ?>" y="<?php echo 200-$height; ?>" width="<?php echo $barWidth; ?>" height="<?php echo $height; ?>" fill="var(--error)" rx="8" style="filter:drop-shadow(0 2px 12px rgba(160,123,110,0.4));transition:height 0.7s;" />
+                        <text x="<?php echo $x + $barWidth/2; ?>" y="260" text-anchor="middle" font-size="16" fill="var(--text-primary)" style="word-wrap:break-word;max-width:<?php echo $barWidth; ?>px;"><?php $name = htmlspecialchars($row['module_name']); echo strlen($name) > 12 ? substr($name, 0, 10).'...' : $name; ?></text>
+                        <text x="<?php echo $x + $barWidth/2; ?>" y="<?php echo 190-$height; ?>" text-anchor="middle" font-size="18" fill="var(--primary)" style="font-weight:700;"><?php echo $row['count']; ?></text>
                         <?php endforeach; ?>
                     </svg>
                 </div>
             <?php else: ?>
                 <div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;opacity:0.8;">
-                    <i class="bi bi-emoji-smile" style="font-size:2.5rem;color:#00f5ff;"></i>
-                    <p style="color: #94a3b8; font-size: 1.1rem;">No absences recorded – keep up the great attendance!</p>
+                    <i class="bi bi-emoji-smile" style="font-size:2.5rem;color:var(--primary);"></i>
+                    <p style="color: var(--text-secondary); font-size: 1.1rem;">No absences recorded – keep maintaining your excellent attendance!</p>
                 </div>
             <?php endif; ?>
         </div>
-        <div class="info-card" style="background:linear-gradient(135deg,#00f5ff22 0%,#7b2ff722 100%);margin-bottom:2.5rem;">
-            <h3 style="font-size:1.3rem;font-weight:700;color:#00f5ff;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-lightbulb"></i> Did You Know?</h3>
-            <blockquote style="font-size:1.15rem;color:#cbd5e1;font-style:italic;margin:0 0 0.5rem 0;">“Students with regular attendance are more likely to achieve higher grades and build strong academic habits.”</blockquote>
-            <div style="color:#94a3b8;font-size:0.98rem;">Your presence matters. Every day in class is a step toward your goals!</div>
+        <div class="info-card" style="background:linear-gradient(135deg,rgba(160,117,107,0.08),rgba(90,140,111,0.08));margin-bottom:2.5rem;">
+            <h3 style="font-size:1.3rem;font-weight:700;color:var(--primary);margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-lightbulb"></i> Did You Know?</h3>
+            <blockquote style="font-size:1.15rem;color:var(--text-secondary);font-style:italic;margin:0 0 0.5rem 0;">"Consistent attendance is directly linked to improved academic performance and better learning outcomes."</blockquote>
+            <div style="color:var(--text-muted);font-size:0.98rem;">Make attendance a priority – it's one of the best investments in your academic success.</div>
         </div>
         <div class="info-card" style="background:rgba(255,255,255,0.03);">
-            <h3 style="font-size:1.1rem;font-weight:700;color:#ff3b3b;margin-bottom:0.7rem;display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-info-circle"></i> Absence Tips</h3>
-            <ul style="color:#cbd5e1;font-size:1rem;line-height:1.7;margin:0 0 0 1.2rem;">
-                <li>If you must miss a class, notify your professor in advance.</li>
-                <li>Review missed material as soon as possible to stay on track.</li>
-                <li>Use the chatbot for help catching up on missed content.</li>
+            <h3 style="font-size:1.1rem;font-weight:700;color:var(--primary);margin-bottom:0.7rem;display:flex;align-items:center;gap:0.5rem;"><i class="bi bi-info-circle"></i> Helpful Tips</h3>
+            <ul style="color:var(--text-secondary);font-size:1rem;line-height:1.7;margin:0 0 0 1.2rem;">
+                <li>Communicate early with professors if you need to miss a class.</li>
+                <li>Review class notes and materials from your classmates promptly.</li>
+                <li>Use available resources to catch up on missed lectures and assignments.</li>
             </ul>
         </div>
     </main>
@@ -364,6 +445,42 @@ const sidebar = document.getElementById('sidebar');
 
 sidebarToggle.addEventListener('click', () => {
     sidebar.classList.toggle('collapsed');
+});
+
+// Theme Toggle Functionality
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+const root = document.documentElement;
+
+// Get saved theme from localStorage
+const savedTheme = localStorage.getItem('theme');
+
+// Apply the saved theme on page load
+if (savedTheme === 'light') {
+    root.setAttribute('data-theme', 'light');
+    themeIcon.classList.remove('bi-moon-fill');
+    themeIcon.classList.add('bi-sun-fill');
+} else if (savedTheme === 'dark') {
+    root.removeAttribute('data-theme');
+    themeIcon.classList.remove('bi-sun-fill');
+    themeIcon.classList.add('bi-moon-fill');
+}
+
+// Toggle theme on button click
+themeToggle.addEventListener('click', () => {
+    const currentTheme = root.getAttribute('data-theme');
+    
+    if (currentTheme === 'light') {
+        root.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'dark');
+        themeIcon.classList.remove('bi-sun-fill');
+        themeIcon.classList.add('bi-moon-fill');
+    } else {
+        root.setAttribute('data-theme', 'light');
+        localStorage.setItem('theme', 'light');
+        themeIcon.classList.remove('bi-moon-fill');
+        themeIcon.classList.add('bi-sun-fill');
+    }
 });
 </script>
 

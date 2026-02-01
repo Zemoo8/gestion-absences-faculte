@@ -34,8 +34,8 @@ $msg = "";
 if(isset($_GET['email'])){
     $req_email = $_GET['email'];
     
-    // Get request data
-    $stmt = $mysqli->prepare("SELECT id, nom, prenom, email FROM account_requests WHERE email=? AND status='pending'");
+    // Get request data including photo
+    $stmt = $mysqli->prepare("SELECT id, nom, prenom, email, photo_path FROM account_requests WHERE email=? AND status='pending'");
     $stmt->bind_param("s", $req_email);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -44,7 +44,8 @@ if(isset($_GET['email'])){
         $request = $result->fetch_assoc();
         $nom = $request['nom'];
         $prenom = $request['prenom'];
-        $user_email = $request['email']; // where we send credentials
+        $user_email = $request['email'];
+        $photo_path = $request['photo_path'];
         
         // Generate login email and password
         $generated_email = strtolower($nom . $prenom . rand(10,99)) . ".macademia@gmail.com";
@@ -52,9 +53,9 @@ if(isset($_GET['email'])){
         $hashed_pass = password_hash($generated_pass, PASSWORD_DEFAULT);
         $role = 'student';
 
-        // Insert into users table
-        $stmt2 = $mysqli->prepare("INSERT INTO users (nom, prenom, email, password, role) VALUES (?, ?, ?, ?, ?)");
-        $stmt2->bind_param("sssss", $nom, $prenom, $generated_email, $hashed_pass, $role);
+        // Insert into users table with photo_path
+        $stmt2 = $mysqli->prepare("INSERT INTO users (nom, prenom, email, password, role, photo_path) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt2->bind_param("ssssss", $nom, $prenom, $generated_email, $hashed_pass, $role, $photo_path);
         if($stmt2->execute()){
             // Mark request as approved
             $stmt3 = $mysqli->prepare("UPDATE account_requests SET status='approved' WHERE id=?");
@@ -137,6 +138,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_GET['email'])){
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 <style>
+/* Dark Theme (Default) */
 :root {
     --primary: #00f5ff;
     --primary-glow: rgba(0, 245, 255, 0.5);
@@ -154,6 +156,26 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && !isset($_GET['email'])){
     --shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.85);
     --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     --glass-blur: blur(24px) saturate(200%);
+}
+
+/* Light Theme */
+:root[data-theme="light"] {
+    --primary: #8B5E3C;
+    --primary-glow: rgba(139,94,60,0.12);
+    --secondary: #3B6A47;
+    --accent: #A67C52;
+    --bg-main: linear-gradient(180deg, #f4efe6 0%, #efe7d9 100%);
+    --bg-panel: rgba(255, 255, 255, 0.9);
+    --bg-card: #ffffff;
+    --bg-card-border: rgba(0, 0, 0, 0.06);
+    --text-primary: #2b2b2b;
+    --text-secondary: #4b4b4b;
+    --text-muted: #6b6b6b;
+    --error: #c53030;
+    --success: #2f855a;
+    --shadow: 0 12px 30px rgba(15,15,15,0.08);
+    --transition: all 0.3s ease;
+    --glass-blur: blur(8px) saturate(120%);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -294,7 +316,8 @@ body {
     top: 100%;
     right: 0;
     margin-top: 1rem;
-    backdrop-filter: none;
+    backdrop-filter: var(--glass-blur);
+    background: var(--bg-panel);
     border: 1px solid var(--bg-card-border);
     border-radius: 14px;
     min-width: 320px;
@@ -308,7 +331,6 @@ body {
 }
 
 .notification-dropdown.show {
-    background: #0a0e27;
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
@@ -397,6 +419,27 @@ body {
     font-weight: 700;
 }
 
+.theme-toggle {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--bg-card-border);
+    color: var(--text-secondary);
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
+}
+
 /* === MAIN LAYOUT === */
 .dashboard-wrapper {
     display: flex;
@@ -448,9 +491,17 @@ body {
     background: rgba(255, 255, 255, 0.04);
 }
 
+:root[data-theme="light"] .sidebar-link.active {
+    background: rgba(139, 94, 60, 0.08);
+}
+
 .sidebar-link:hover {
     color: var(--primary);
     background: rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme="light"] .sidebar-link:hover {
+    background: rgba(139, 94, 60, 0.08);
 }
 
 .sidebar-link i {
@@ -496,9 +547,23 @@ body {
     margin-bottom: 1rem;
     border: 2px solid var(--bg-card-border);
     border-radius: 10px;
-    background: #12172f; /* darker solid background */
-    color: #f0f4f8; 
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
     font-family: 'Inter', sans-serif;
+    transition: var(--transition);
+}
+
+:root[data-theme="light"] .form-box input,
+:root[data-theme="light"] .form-box select {
+    background: #ffffff;
+    border: 2px solid rgba(0, 0, 0, 0.12);
+    color: #2b2b2b;
+}
+
+.form-box input:focus, .form-box select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
 .form-box button {
@@ -588,6 +653,11 @@ body {
     </div>
     
     <div class="navbar-right">
+        <!-- Theme Toggle -->
+        <button class="theme-toggle" id="themeToggle">
+            <i class="bi bi-moon-fill" id="themeIcon"></i>
+        </button>
+        
         <!-- Notification Dropdown -->
         <div class="notification-wrapper">
             <button class="notification-bell" id="notificationBell">
@@ -664,6 +734,34 @@ body {
 </div>
 
 <script>
+// === THEME TOGGLE ===
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+const root = document.documentElement;
+
+// Load saved theme or default to dark
+const savedTheme = localStorage.getItem('theme') || 'dark';
+if (savedTheme === 'light') {
+    root.setAttribute('data-theme', 'light');
+    themeIcon.className = 'bi bi-sun-fill';
+}
+
+themeToggle.addEventListener('click', () => {
+    const currentTheme = root.getAttribute('data-theme');
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    
+    if (newTheme === 'light') {
+        root.setAttribute('data-theme', 'light');
+        themeIcon.className = 'bi bi-sun-fill';
+    } else {
+        root.removeAttribute('data-theme');
+        themeIcon.className = 'bi bi-moon-fill';
+    }
+    
+    localStorage.setItem('theme', newTheme);
+    document.body.style.transition = 'background 0.5s ease';
+});
+
 // === SIDEBAR TOGGLE ===
 const sidebarToggle = document.getElementById('sidebarToggle');
 const sidebar = document.getElementById('sidebar');

@@ -148,16 +148,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta charset="UTF-8">
 <title>Take Attendance | <?= htmlspecialchars($module['module_name']) ?></title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 
 <style>
+/* Dark Theme (Default) */
 :root {
     --primary: #00f5ff;
+    --primary-glow: rgba(0, 245, 255, 0.5);
+    --secondary: #7b2ff7;
     --accent: #f72b7b;
     --bg-main: linear-gradient(135deg, #0a0e27 0%, #12172f 50%);
     --bg-card: rgba(255, 255, 255, 0.04);
     --bg-card-border: rgba(255, 255, 255, 0.08);
     --text-primary: #f0f4f8;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --success: #00e676;
+    --error: #ff3b3b;
+    --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
+
+/* Light Theme */
+:root[data-theme="light"] {
+    --primary: #8B5E3C;
+    --primary-glow: rgba(139,94,60,0.12);
+    --secondary: #3B6A47;
+    --accent: #A67C52;
+    --bg-main: linear-gradient(180deg, #f4efe6 0%, #efe7d9 100%);
+    --bg-card: #ffffff;
+    --bg-card-border: rgba(0, 0, 0, 0.06);
+    --text-primary: #2b2b2b;
+    --text-secondary: #4b4b4b;
+    --text-muted: #6b6b6b;
+    --success: #2f855a;
+    --error: #c53030;
+    --transition: all 0.3s ease;
+}
+
 body {
     font-family: 'Inter', sans-serif;
     background: var(--bg-main);
@@ -217,9 +244,39 @@ body {
     font-weight: 700;
     cursor: pointer;
 }
+
+.theme-toggle {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--bg-card-border);
+    color: var(--text-secondary);
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    z-index: 1000;
+}
+
+.theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
+}
 </style>
 </head>
 <body>
+
+<!-- Theme Toggle -->
+<button class="theme-toggle" id="themeToggle">
+    <i class="bi bi-moon-fill" id="themeIcon"></i>
+</button>
 
 <h1><?= htmlspecialchars($module['module_name']) ?> – <?= date('M d, Y') ?></h1>
 
@@ -250,6 +307,33 @@ body {
 </form>
 
 <script>
+// === THEME TOGGLE ===
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+const root = document.documentElement;
+
+const savedTheme = localStorage.getItem('theme') || 'dark';
+if (savedTheme === 'light') {
+    root.setAttribute('data-theme', 'light');
+    themeIcon.className = 'bi bi-sun-fill';
+}
+
+themeToggle.addEventListener('click', () => {
+    const currentTheme = root.getAttribute('data-theme');
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    
+    if (newTheme === 'light') {
+        root.setAttribute('data-theme', 'light');
+        themeIcon.className = 'bi bi-sun-fill';
+    } else {
+        root.removeAttribute('data-theme');
+        themeIcon.className = 'bi bi-moon-fill';
+    }
+    
+    localStorage.setItem('theme', newTheme);
+    document.body.style.transition = 'background 0.5s ease';
+});
+
 function toggleStatus(studentId) {
     const input  = document.getElementById('input-' + studentId);
     const card   = input.closest('.student-card');

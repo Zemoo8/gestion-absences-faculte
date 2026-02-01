@@ -26,6 +26,7 @@ $days = [1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 <style>
+/* Dark Theme (Default) */
 :root {
     --primary: #00f5ff;
     --primary-glow: rgba(0, 245, 255, 0.5);
@@ -40,10 +41,69 @@ $days = [1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 
     --text-muted: #94a3b8;
     --error: #ff3b3b;
     --success: #00e676;
-    --warning: #ffa500;
     --shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.85);
     --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     --glass-blur: blur(24px) saturate(200%);
+}
+
+/* Light Theme */
+:root[data-theme="light"] {
+    --primary: #8B5E3C;
+    --primary-glow: rgba(139,94,60,0.12);
+    --secondary: #5A8C6F;
+    --accent: #B8956A;
+    --bg-main: linear-gradient(180deg, #f4efe6 0%, #efe7d9 100%);
+    --bg-panel: rgba(255, 255, 255, 0.9);
+    --bg-card: #ffffff;
+    --bg-card-border: rgba(0, 0, 0, 0.06);
+    --text-primary: #3a3a3a;
+    --text-secondary: #5a5a5a;
+    --text-muted: #7a7a7a;
+    --error: #A67B6E;
+    --success: #7A9E7D;
+    --shadow: 0 12px 30px rgba(15,15,15,0.08);
+    --transition: all 0.3s ease;
+    --glass-blur: blur(8px) saturate(120%);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-main);
+    background-size: 400% 400%;
+    animation: gradientShift 25s ease infinite;
+    color: var(--text-primary);
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.theme-toggle {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--bg-card-border);
+    color: var(--text-secondary);
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -150,7 +210,7 @@ body {
     width: 38px;
     height: 38px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--secondary), var(--accent));
+    background: var(--primary);
     display: grid;
     place-items: center;
     font-size: 1rem;
@@ -177,9 +237,17 @@ body {
     z-index: 999;
 }
 
-.sidebar.collapsed { transform: translateX(-100%); }
+.sidebar.collapsed {
+    transform: translateX(-100%);
+}
 
-.sidebar-menu { list-style: none; }
+.sidebar-menu {
+    list-style: none;
+}
+
+.sidebar-item {
+    margin-bottom: 0.25rem;
+}
 
 .sidebar-link {
     display: flex;
@@ -198,8 +266,17 @@ body {
     background: rgba(255, 255, 255, 0.04);
 }
 
+:root[data-theme="light"] .sidebar-link.active {
+    background: rgba(139, 94, 60, 0.08);
+}
+
 .sidebar-link:hover {
-    background: rgba(255, 255, 255, 0.02);
+    color: var(--primary);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme="light"] .sidebar-link:hover {
+    background: rgba(139, 94, 60, 0.08);
 }
 
 .sidebar-link i {
@@ -228,7 +305,7 @@ body {
     max-width:900px;
     margin:3rem auto 2rem auto;
     padding:2.5rem 2rem;
-    background:linear-gradient(135deg,#00f5ff22 0%,#7b2ff722 100%);
+    background:var(--bg-card);
     border-radius:24px;
     box-shadow:0 8px 32px rgba(0,0,0,0.18);
     display:flex;
@@ -239,24 +316,24 @@ body {
 .hero-icon {
     width:80px;
     height:80px;
-    background:linear-gradient(135deg,#00f5ff,#7b2ff7);
+    background:var(--primary);
     border-radius:50%;
     display:grid;
     place-items:center;
     font-size:2.5rem;
-    box-shadow:0 0 30px #00f5ff44;
+    box-shadow:0 0 30px var(--primary-glow);
 }
 
 .hero-content h1 {
     font-size:2.3rem;
     font-weight:900;
     margin:0;
-    color:#00f5ff;
+    color:var(--primary);
     letter-spacing:-1px;
 }
 
 .hero-content p {
-    color:#cbd5e1;
+    color:var(--text-secondary);
     font-size:1.15rem;
     margin-top:0.5rem;
 }
@@ -271,7 +348,7 @@ body {
 }
 
 .module-card {
-    background:rgba(0,245,255,0.08);
+    background:var(--bg-card);
     border-radius:18px;
     padding:2rem 1.5rem;
     box-shadow:0 2px 12px rgba(0,0,0,0.10);
@@ -284,30 +361,30 @@ body {
 
 .module-card:hover {
     transform:translateY(-6px) scale(1.03);
-    box-shadow:0 8px 32px #00f5ff33;
+    box-shadow:0 8px 32px var(--primary-glow);
 }
 
 .module-title {
     font-size:1.35rem;
     font-weight:800;
-    color:#00f5ff;
+    color:var(--primary);
     margin-bottom:0.2rem;
 }
 
 .module-prof {
     font-size:1.05rem;
-    color:#cbd5e1;
+    color:var(--text-secondary);
 }
 
 .module-sched {
     font-size:0.98rem;
-    color:#94a3b8;
+    color:var(--text-muted);
     margin-top:0.2rem;
 }
 
 .module-badge {
     display:inline-block;
-    background:linear-gradient(135deg,#7b2ff7,#00f5ff);
+    background:var(--primary);
     color:white;
     font-size:0.85rem;
     font-weight:700;
@@ -315,7 +392,7 @@ body {
     border-radius:12px;
     margin-bottom:0.7rem;
     letter-spacing:0.5px;
-    box-shadow:0 2px 8px #00f5ff22;
+    box-shadow:0 2px 8px var(--primary-glow);
 }
 
 .modules-stats {
@@ -339,7 +416,7 @@ body {
 }
 
 .stat-label {
-    color:#cbd5e1;
+    color:var(--text-secondary);
     font-size:1.05rem;
     margin-bottom:0.5rem;
 }
@@ -347,7 +424,7 @@ body {
 .stat-value {
     font-size:2.1rem;
     font-weight:900;
-    color:#00f5ff;
+    color:var(--primary);
 }
 
 @media (max-width: 768px) {
@@ -410,6 +487,9 @@ body {
     </div>
     
     <div class="navbar-right">
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+            <i class="bi bi-moon-fill" id="themeIcon"></i>
+        </button>
         <div class="user-menu">
             <span><?php echo htmlspecialchars($_SESSION['prenom'] . ' ' . $_SESSION['nom']); ?></span>
             <div class="user-avatar"><?php echo substr($_SESSION['prenom'], 0, 1); ?></div>
@@ -489,6 +569,38 @@ const sidebar = document.getElementById('sidebar');
 
 sidebarToggle.addEventListener('click', () => {
     sidebar.classList.toggle('collapsed');
+});
+
+// Theme Toggle Functionality
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+const root = document.documentElement;
+
+// Get saved theme or default to 'dark'
+const savedTheme = localStorage.getItem('theme') || 'dark';
+
+// Apply the saved theme on page load
+if (savedTheme === 'light') {
+    root.setAttribute('data-theme', 'light');
+    themeIcon.classList.remove('bi-moon-fill');
+    themeIcon.classList.add('bi-sun-fill');
+}
+
+// Toggle theme on button click
+themeToggle.addEventListener('click', () => {
+    const currentTheme = root.getAttribute('data-theme');
+    
+    if (currentTheme === 'light') {
+        root.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'dark');
+        themeIcon.classList.remove('bi-sun-fill');
+        themeIcon.classList.add('bi-moon-fill');
+    } else {
+        root.setAttribute('data-theme', 'light');
+        localStorage.setItem('theme', 'light');
+        themeIcon.classList.remove('bi-moon-fill');
+        themeIcon.classList.add('bi-sun-fill');
+    }
 });
 </script>
 

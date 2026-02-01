@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -107,7 +107,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         --glass-blur: blur(24px) saturate(200%);
     }
 
+    :root[data-theme="light"] {
+        --primary: #8B5E3C;
+        --primary-glow: rgba(139, 94, 60, 0.12);
+        --secondary: #3B6A47;
+        --accent: #A67C52;
+        --bg-main: linear-gradient(180deg, #f4efe6 0%, #efe7d9 100%);
+        --bg-panel: rgba(255, 255, 255, 0.9);
+        --bg-card: #ffffff;
+        --bg-card-border: rgba(0, 0, 0, 0.06);
+        --text-primary: #2b2b2b;
+        --text-secondary: #4b4b4b;
+        --text-muted: #6b6b6b;
+        --error: #A67B6E;
+        --success: #7A9E7D;
+        --shadow: 0 12px 30px rgba(15, 15, 15, 0.08);
+        --transition: all 0.3s ease;
+        --glass-blur: blur(8px) saturate(120%);
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    .theme-toggle {
+        position: fixed;
+        top: 1.5rem;
+        right: 1.5rem;
+        z-index: 10;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid var(--bg-card-border);
+        color: var(--text-secondary);
+        padding: 0.55rem 0.85rem;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: var(--transition);
+        backdrop-filter: var(--glass-blur);
+    }
+
+    .theme-toggle:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: var(--primary);
+        color: var(--primary);
+        transform: translateY(-2px);
+    }
 
     body {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -357,23 +402,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         position: relative;
     }
 
-    .form-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, var(--primary), var(--accent));
-        opacity: 0.6;
-        transition: var(--transition);
-    }
-
-    .form-card:hover::before {
-        opacity: 1;
-        height: 6px;
-    }
-
     .form-header {
         text-align: center;
         margin-bottom: 2.5rem;
@@ -476,6 +504,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         background: rgba(15, 23, 42, 0.7);
     }
 
+    :root[data-theme="light"] .form-control {
+        background: rgba(255, 255, 255, 0.9);
+        border-color: rgba(0, 0, 0, 0.08);
+        color: var(--text-primary);
+    }
+
+    :root[data-theme="light"] .form-control:focus {
+        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(139, 94, 60, 0.12);
+    }
+
     .form-control::placeholder {
         color: transparent;
     }
@@ -500,6 +539,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         color: var(--primary);
         background: rgba(15, 23, 42, 0.9);
         border-radius: 4px;
+    }
+
+    :root[data-theme="light"] .form-control:focus ~ .form-label,
+    :root[data-theme="light"] .form-control:not(:placeholder-shown) ~ .form-label {
+        background: #f4efe6;
     }
 
     .form-control.is-invalid {
@@ -677,6 +721,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </style>
 </head>
 <body>
+<button class="theme-toggle" id="themeToggle" title="Toggle theme">
+    <i class="bi bi-moon-fill" id="themeIcon"></i>
+</button>
 
 <div class="particles">
     <div class="particle"></div>
@@ -877,6 +924,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             emailInput.classList.add('is-invalid');
         } else {
             emailInput.classList.remove('is-invalid');
+        }
+    });
+
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const root = document.documentElement;
+    const savedTheme = localStorage.getItem('theme');
+
+    if (savedTheme === 'light') {
+        root.setAttribute('data-theme', 'light');
+        themeIcon.classList.remove('bi-moon-fill');
+        themeIcon.classList.add('bi-sun-fill');
+    } else {
+        root.removeAttribute('data-theme');
+        themeIcon.classList.remove('bi-sun-fill');
+        themeIcon.classList.add('bi-moon-fill');
+    }
+
+    themeToggle.addEventListener('click', () => {
+        const currentTheme = root.getAttribute('data-theme');
+        if (currentTheme === 'light') {
+            root.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'dark');
+            themeIcon.classList.remove('bi-sun-fill');
+            themeIcon.classList.add('bi-moon-fill');
+        } else {
+            root.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+            themeIcon.classList.remove('bi-moon-fill');
+            themeIcon.classList.add('bi-sun-fill');
         }
     });
 </script>

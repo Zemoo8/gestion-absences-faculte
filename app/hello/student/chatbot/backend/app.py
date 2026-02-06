@@ -16,7 +16,6 @@ logging.basicConfig(
 )
 
 # Groq Configuration
-GROQ_API_KEY = "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"
 GROQ_MODEL = "llama-3.3-70b-versatile"
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 

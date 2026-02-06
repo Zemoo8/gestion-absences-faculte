@@ -23,5 +23,6 @@ class AdminController extends BaseController {
     public function moduleList() { $this->render('admin/modulelist'); }
     public function notifications() { $this->render('admin/notif'); }
     public function userList() { $this->render('admin/userlist'); }
+    public function profile() { $this->render('admin/profile'); }
 }
 ?>

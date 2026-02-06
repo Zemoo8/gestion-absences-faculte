@@ -88,6 +88,7 @@ class AuthController extends BaseController {
     public function forgotPassword() { $this->render('auth/forgot_password'); }
     public function requestAccount() { $this->render('auth/requestacc'); }
     public function resetPassword() { $this->render('auth/resetpass'); }
+    public function resetpass() { $this->render('auth/resetpass'); } // Alias for URL routing
     public function testMail() { $this->render('auth/testmail'); }
 }
 ?>

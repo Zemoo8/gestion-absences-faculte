@@ -17,6 +17,7 @@ class ProfessorController extends BaseController {
     public function reports() { $this->render('professor/reports'); }
     public function students() { $this->render('professor/students'); }
     public function takeAttendance() { $this->render('professor/take_attendance'); }
+    public function profile() { $this->render('professor/profile'); }
 }
 
 ?>

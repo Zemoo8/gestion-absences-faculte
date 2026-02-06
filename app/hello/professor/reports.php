@@ -24,6 +24,9 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'professor') {
 
 $prof_id = $_SESSION['user_id'];
 
+// Professor info for navbar
+$prof_info = $mysqli->query("SELECT nom, prenom, photo_path FROM users WHERE id = $prof_id")->fetch_assoc();
+
 // Get module list for filter
 $modules = $mysqli->query("SELECT id, module_name FROM modules WHERE professor_id = $prof_id ORDER BY module_name");
 ?>
@@ -446,6 +449,7 @@ body {
     <!-- === SIDEBAR === -->
     <aside class="sidebar" id="sidebar">
         <ul class="sidebar-menu">
+            <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/profdash/profile" class="sidebar-link"><i class="bi bi-person-circle"></i><span>Profile</span></a></li>
             <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/profdash" class="sidebar-link"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
             <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/profdash/my_modules" class="sidebar-link"><i class="bi bi-bookshelf"></i><span>My Modules</span></a></li>
             <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/profdash/students" class="sidebar-link"><i class="bi bi-people"></i><span>Students</span></a></li>

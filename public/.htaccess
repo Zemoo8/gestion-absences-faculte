@@ -3,6 +3,10 @@
     # Adjust this RewriteBase if your project is served from a different subfolder
     RewriteBase /projet/Gestion-absences/public/
 
+    # Proxy chatbot API requests to Flask backend on localhost:5000
+    RewriteCond %{REQUEST_URI} ^/projet/Gestion-absences/public/api/chat$
+    RewriteRule ^api/chat$ http://localhost:5000/chat [P,L]
+
     # If the request is for an existing file or directory, serve it directly
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d

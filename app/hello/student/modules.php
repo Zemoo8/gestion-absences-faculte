@@ -8,6 +8,7 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'student'){
     exit();
 }
 $student_id = $_SESSION['user_id'];
+$student_info = $mysqli->query("SELECT photo_path, nom, prenom FROM users WHERE id = $student_id")->fetch_assoc();
 $my_modules = $mysqli->query("
     SELECT m.module_name, u.prenom as prof_prenom, u.nom as prof_nom, ms.weekday, ms.start_time
     FROM modules m
@@ -492,7 +493,15 @@ body {
         </button>
         <div class="user-menu">
             <span><?php echo htmlspecialchars($_SESSION['prenom'] . ' ' . $_SESSION['nom']); ?></span>
-            <div class="user-avatar"><?php echo substr($_SESSION['prenom'], 0, 1); ?></div>
+            <?php
+            $photo = isset($student_info['photo_path']) ? $student_info['photo_path'] : null;
+            if ($photo && file_exists(__DIR__ . '/../../../public/' . $photo)):
+                $public_url = defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost';
+            ?>
+                <img src="<?php echo $public_url . '/' . htmlspecialchars($photo); ?>" alt="Profile" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; object-position: center;">
+            <?php else: ?>
+                <div class="user-avatar"><?php echo substr($_SESSION['prenom'], 0, 1); ?></div>
+            <?php endif; ?>
         </div>
     </div>
 </nav>
@@ -500,6 +509,7 @@ body {
 <div class="dashboard-wrapper">
     <aside class="sidebar" id="sidebar">
         <ul class="sidebar-menu">
+            <li><a href="/projet/Gestion-absences/public/index.php/studdash/profile" class="sidebar-link"><i class="bi bi-person-circle"></i><span>Profile</span></a></li>
             <li><a href="/projet/Gestion-absences/public/index.php/studdash/dashstud" class="sidebar-link"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
             <li><a href="/projet/Gestion-absences/app/hello/student/attendance.php" class="sidebar-link"><i class="bi bi-calendar-check"></i><span>My Attendance</span></a></li>
             <li><a href="/projet/Gestion-absences/app/hello/student/modules.php" class="sidebar-link active"><i class="bi bi-bookshelf"></i><span>My Modules</span></a></li>

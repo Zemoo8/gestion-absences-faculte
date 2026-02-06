@@ -13,6 +13,7 @@ require_once CONTROLLERS_PATH . '/BaseController.php';
 class StudentController extends BaseController {
     public function __construct() {}
     public function dashboard() { $this->render('student/dashstud'); }
+    public function profile() { $this->render('student/profile'); }
 }
 
 ?>

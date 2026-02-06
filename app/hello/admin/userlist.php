@@ -12,6 +12,17 @@ if(!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin'){
     exit();
 }
 
+// Admin info for navbar avatar
+$admin_id = (int)$_SESSION['user_id'];
+$admin_info = $mysqli->query("SELECT nom, prenom, photo_path FROM users WHERE id = $admin_id")->fetch_assoc();
+$public_url = defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost';
+$admin_photo = null;
+if ($admin_info && !empty($admin_info['photo_path'])) {
+    if (file_exists(__DIR__ . '/../../../public/' . $admin_info['photo_path'])) {
+        $admin_photo = $public_url . '/' . $admin_info['photo_path'];
+    }
+}
+
 // Pending requests for notification bell
 $pending_requests = $mysqli->query("
     SELECT id, nom, prenom, email, created_at 
@@ -579,8 +590,12 @@ td {
         </div>
         
         <div class="user-menu">
-            <span>Farouk</span>
-            <div class="user-avatar">F</div>
+            <span><?php echo htmlspecialchars($admin_info['prenom'] . ' ' . $admin_info['nom']); ?></span>
+            <?php if ($admin_photo): ?>
+                <img src="<?php echo htmlspecialchars($admin_photo); ?>" alt="Profile" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; object-position: center;">
+            <?php else: ?>
+                <div class="user-avatar"><?php echo substr($admin_info['prenom'], 0, 1); ?></div>
+            <?php endif; ?>
         </div>
     </div>
 </nav>
@@ -590,6 +605,7 @@ td {
     <!-- === SIDEBAR === -->
     <aside class="sidebar" id="sidebar">
         <ul class="sidebar-menu">
+            <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/profile" class="sidebar-link"><i class="bi bi-person-circle"></i><span>Profile</span></a></li>
             <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/dashboard" class="sidebar-link"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
             <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/addUser" class="sidebar-link"><i class="bi bi-person-plus"></i><span>Add User</span></a></li>
             <li><a href="<?php echo PUBLIC_URL; ?>/index.php/admindash/userList" class="sidebar-link active"><i class="bi bi-people"></i><span>User List</span></a></li>

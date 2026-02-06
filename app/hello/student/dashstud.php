@@ -575,6 +575,7 @@ body {
 <div class="dashboard-wrapper">
     <aside class="sidebar" id="sidebar">
         <ul class="sidebar-menu">
+            <li><a href="/projet/Gestion-absences/public/index.php/studdash/profile" class="sidebar-link"><i class="bi bi-person-circle"></i><span>Profile</span></a></li>
             <li><a href="/projet/Gestion-absences/public/index.php/studdash/dashstud" class="sidebar-link active"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
             <li><a href="/projet/Gestion-absences/app/hello/student/attendance.php" class="sidebar-link"><i class="bi bi-calendar-check"></i><span>My Attendance</span></a></li>
             <li><a href="/projet/Gestion-absences/app/hello/student/modules.php" class="sidebar-link"><i class="bi bi-bookshelf"></i><span>My Modules</span></a></li>
@@ -589,12 +590,12 @@ body {
         <div class="chatbot-placeholder" style="width:100%;max-width:900px;height:600px;background:var(--bg-card);backdrop-filter:var(--glass-blur);border:1px solid var(--bg-card-border);border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.5rem;box-shadow:var(--shadow);position:relative;overflow:hidden;">
             <div style="width:100%;padding:0 2.5rem;">
                 <div style="display:flex;align-items:center;gap:1.5rem;margin-bottom:2rem;">
-                    <div style="width:80px;height:80px;background:var(--primary);border-radius:50%;display:grid;place-items:center;font-size:3rem;box-shadow:0 0 30px var(--primary-glow);">🤖</div>
+                    <div style="width:80px;height:80px;background:var(--primary);border-radius:50%;display:grid;place-items:center;font-size:3rem;box-shadow:0 0 30px var(--primary-glow);overflow:hidden;"><img src="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : '/projet/Gestion-absences/public'; ?>/assets/robot.jpg" alt="AI Assistant" style="width:100%;height:100%;object-fit:cover;"></div>
                     <h2 style="font-size:2.5rem;font-weight:800;background:linear-gradient(135deg,var(--text-primary),var(--primary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0;">Student Assistant</h2>
                 </div>
                 <div id="chatLog" style="height:370px;overflow-y:auto;background:rgba(255,255,255,0.03);border-radius:16px;padding:1.2rem;margin-bottom:2rem;box-shadow:0 2px 8px rgba(0,0,0,0.10);font-size:1.25rem;">
                     <div class="message ai" style="display:flex;align-items:flex-start;gap:14px;">
-                        <div class="message-avatar" style="width:45px;height:45px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;color:white;background:var(--secondary);font-size:2rem;">🤖</div>
+                        <div class="message-avatar" style="width:45px;height:45px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;color:white;background:var(--secondary);font-size:2rem;overflow:hidden;"><img src="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : '/projet/Gestion-absences/public'; ?>/assets/robot.jpg" alt="AI" style="width:100%;height:100%;object-fit:cover;"></div>
                         <div class="message-content" style="max-width:70%;padding:16px 20px;border-radius:18px;line-height:1.6;white-space:pre-line;background:var(--bg-card);color:var(--text-primary);border-bottom-left-radius:7px;box-shadow:0 2px 8px rgba(0,0,0,0.12);font-size:1.15rem;">
                             Hi! Ask me about your absences, schedule, or modules.
                         </div>
@@ -631,6 +632,8 @@ body {
         const chatLog = document.getElementById('chatLog');
         const userInput = document.getElementById('userMessage');
         const sendBtn = document.getElementById('sendBtn');
+        const studentPhoto = "<?php echo (!empty($student_info['photo_path']) ? $student_info['photo_path'] : ''); ?>";
+        const publicUrl = "<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : '/projet/Gestion-absences/public'; ?>";
 
         function handleEnter(event) {
             if (event.key === 'Enter') {
@@ -646,7 +649,6 @@ body {
             messageDiv.style.gap = '14px';
             const avatar = document.createElement('div');
             avatar.className = 'message-avatar';
-            avatar.textContent = isUser ? '👤' : '🤖';
             avatar.style.width = '45px';
             avatar.style.height = '45px';
             avatar.style.borderRadius = '50%';
@@ -657,6 +659,28 @@ body {
             avatar.style.color = 'white';
             avatar.style.background = isUser ? 'var(--primary)' : 'var(--secondary)';
             avatar.style.fontSize = '2rem';
+            avatar.style.overflow = 'hidden';
+            if (isUser) {
+                if (studentPhoto) {
+                    const img = document.createElement('img');
+                    img.src = publicUrl + '/' + studentPhoto;
+                    img.alt = 'Your Profile';
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.objectFit = 'cover';
+                    avatar.appendChild(img);
+                } else {
+                    avatar.textContent = '👤';
+                }
+            } else {
+                const img = document.createElement('img');
+                img.src = '/projet/Gestion-absences/public/assets/robot.jpg';
+                img.alt = 'AI';
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
+                avatar.appendChild(img);
+            }
             const contentDiv = document.createElement('div');
             contentDiv.className = 'message-content';
             contentDiv.textContent = content;
@@ -686,7 +710,6 @@ body {
             typingDiv.style.gap = '14px';
             const avatar = document.createElement('div');
             avatar.className = 'message-avatar';
-            avatar.textContent = '🤖';
             avatar.style.background = 'var(--secondary)';
             avatar.style.width = '45px';
             avatar.style.height = '45px';
@@ -697,6 +720,14 @@ body {
             avatar.style.fontWeight = 'bold';
             avatar.style.color = 'white';
             avatar.style.fontSize = '2rem';
+            avatar.style.overflow = 'hidden';
+            const img = document.createElement('img');
+            img.src = '/projet/Gestion-absences/public/assets/robot.jpg';
+            img.alt = 'AI';
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            avatar.appendChild(img);
             const typingContent = document.createElement('div');
             typingContent.className = 'message-content typing-indicator';
             typingContent.innerHTML = '<span></span><span></span><span></span>';
@@ -727,7 +758,7 @@ body {
             userInput.value = '';
             showTyping();
             try {
-                const response = await fetch('http://127.0.0.1:5000/chat', {
+                const response = await fetch('/projet/Gestion-absences/public/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 

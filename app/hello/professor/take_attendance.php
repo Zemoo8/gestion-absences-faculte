@@ -3,6 +3,7 @@
 if (!defined('BASE_PATH')) {
     require_once __DIR__ . '/../../../bootstrap.php';
 }
+require_once __DIR__ . '/ip_check.php';
 global $mysqli;
 
 // Redirect direct access to canonical front-controller take_attendance route
@@ -13,23 +14,6 @@ if (basename($_SERVER['SCRIPT_NAME']) !== 'index.php') {
     header('Location: ' . $target);
     exit();
 }
-
-function ip_in_subnet($ip, $subnet, $mask) {
-    $ip = ip2long($ip);
-    $subnet = ip2long($subnet);
-    $mask = ip2long($mask);
-    return ($ip & $mask) === ($subnet & $mask);
-}
-
-$client_ip = $_SERVER['REMOTE_ADDR'] ?? '';
-
-// Allow localhost for testing (IPv4 and IPv6)
-if (!in_array($client_ip, ['127.0.0.1', '::1']) 
-    && !ip_in_subnet($client_ip, '192.168.50.0', '255.255.255.0')) {
-    die("<script>alert('Access denied: you must be on the allowed network'); window.location.href='../login/login.php';</script>");
-}
-
-
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'professor') {
     header("Location: " . PUBLIC_URL . "/index.php/login/login");

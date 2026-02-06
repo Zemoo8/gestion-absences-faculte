@@ -1,0 +1,20 @@
+# IP Restriction for take_attendance.php
+# Only allow access from school WiFi (10.25.0.0/16 network)
+
+<Files "take_attendance.php">
+    # Deny all by default
+    Require all denied
+    
+    # Allow only school WiFi network
+    Require ip 10.25.0.0/16
+</Files>
+
+# If the above doesn't work, use this alternative method:
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Block take_attendance.php for IPs outside 10.25.0.0/16
+    RewriteCond %{REQUEST_FILENAME} take_attendance\.php$
+    RewriteCond %{REMOTE_ADDR} !^10\.25\.
+    RewriteRule ^ - [F,L]
+</IfModule>

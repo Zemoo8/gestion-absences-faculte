@@ -25,7 +25,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'professor') {
 }
 
 $prof_id = (int)$_SESSION['user_id'];
-$prof_info = $mysqli->query("SELECT nom, prenom FROM users WHERE id = $prof_id")->fetch_assoc();
+$prof_info = $mysqli->query("SELECT nom, prenom, photo_path FROM users WHERE id = $prof_id")->fetch_assoc();
 
 require 'PHPMailer/src/Exception.php';
 require 'PHPMailer/src/PHPMailer.php';
@@ -45,7 +45,7 @@ $mail_config = [
 
 /* FIXED ABSENCE RATE: Each absence = 3.3% */
 $absence_per_session = 3.3;
-$absence_threshold = 20; // 20% threshold
+$absence_threshold = 6.6; // 6.6% threshold (TESTING)
 
 /* Reminder log table */
 $mysqli->query("CREATE TABLE IF NOT EXISTS reminder_log (
@@ -124,7 +124,7 @@ function autoSendReminder($student_id, $module_id, $prof_id, $prof_info, $mysqli
     // Calculate absence rate
     $absRate = $stat['absence_count'] * $absence_per_session;
 
-    // FIXED: Only send if absence rate >= 20% (threshold)
+    // FIXED: Only send if absence rate >= 6.6% (threshold)
     if ($absRate < $threshold) {
         return false;
     }
@@ -195,10 +195,10 @@ if (isset($_POST['remind']) && isset($_POST['student_id']) && isset($_POST['csrf
         exit();
     }
 
-    // FIXED: Check threshold (20%)
+    // FIXED: Check threshold (6.6%)
     $absRate = $stat['absence_count'] * $absence_per_session;
     if ($absRate < $absence_threshold) {
-        echo json_encode(['ok'=>false,'reason'=>'Below 20% threshold ('.round($absRate,1).'%)']);
+        echo json_encode(['ok'=>false,'reason'=>'Below 6.6% threshold ('.round($absRate,1).'%)']);
         exit();
     }
 
@@ -298,7 +298,7 @@ if ($selected_class > 0 && $selected_module > 0) {
         $absence_count = (int)$student['absence_count'];
         $absRate = $absence_count * $absence_per_session;
         
-        // FIXED: Only auto-send if >= 20%
+        // FIXED: Only auto-send if >= 6.6%
         if ($absRate >= $absence_threshold) {
             $sent = autoSendReminder($student['id'], $selected_module, $prof_id, $prof_info, $mysqli, $absence_per_session, $mail_config, $absence_threshold);
             if ($sent) $auto_sent_count++;
@@ -973,6 +973,7 @@ body {
     <!-- === SIDEBAR === -->
     <aside class="sidebar" id="sidebar">
         <ul class="sidebar-menu">
+            <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/profdash/profile" class="sidebar-link"><i class="bi bi-person-circle"></i><span>Profile</span></a></li>
             <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/profdash" class="sidebar-link"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
             <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/profdash/my_modules" class="sidebar-link"><i class="bi bi-bookshelf"></i><span>My Modules</span></a></li>
             <li><a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : 'http://localhost'; ?>/index.php/profdash/students" class="sidebar-link active"><i class="bi bi-people"></i><span>Students</span></a></li>
@@ -992,10 +993,9 @@ body {
         <?php if ($auto_sent_count > 0): ?>
         <div class="auto-sent-notification">
             <i class="bi bi-check-circle-fill"></i>
-            <span>Automatically sent <?php echo $auto_sent_count; ?> attendance reminder email(s) to students with ≥20% absence rate.</span>
+            <span>Automatically sent <?php echo $auto_sent_count; ?> attendance reminder email(s) to students with ≥6.6% absence rate.</span>
         </div>
         <?php endif; ?>
-
         <!-- CLASS AND MODULE SELECTORS -->
         <div class="selector-container">
             <div class="class-selector">
@@ -1039,7 +1039,7 @@ body {
                     // Each absence = 3.3%
                     $absRate = $absence_count * $absence_per_session;
                     $presRate = 100 - $absRate;
-                    $critical = $absRate >= 20;
+                    $critical = $absRate >= 6.6;
                     
                     // Check if auto-sent today
                     $today = date('Y-m-d');
@@ -1084,7 +1084,7 @@ body {
                         </div>
                         <div class="rate-label" id="label-<?= $s['id'] ?>">Absence Rate</div>
                         <div class="alert-banner critical" id="alert-<?= $s['id'] ?>" style="<?= $critical?'display:flex':'display:none' ?>">
-                            <i class="bi bi-exclamation-triangle-fill"></i><span>20%+ absence detected</span>
+                            <i class="bi bi-exclamation-triangle-fill"></i><span>6.6%+ absence detected</span>
                         </div>
                     </div>
                     <div class="student-actions">

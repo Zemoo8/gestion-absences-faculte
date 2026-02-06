@@ -1352,7 +1352,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
         <p class="hero-subtitle typing-cursor" id="heroSubtitle">
             Where tradition meets singularity. Experience the academic management platform that shapes tomorrow's leaders.
         </p>
-        <a href="requestacc.php" class="cta-button" id="mainCta">
+        <a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : '/projet/Gestion-absences/public'; ?>/index.php/login/requestAccount" class="cta-button" id="mainCta">
             <span>Request Access</span>
             <i class="bi bi-arrow-right"></i>
         </a>
@@ -1465,7 +1465,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
     <div class="cta-content scroll-animate">
         <h2>Your Legacy Awaits</h2>
         <p>Initialize your access to the singularity. Join the consciousness that shapes realities.</p>
-        <a href="requestacc.php" class="cta-button">
+        <a href="<?php echo defined('PUBLIC_URL') ? PUBLIC_URL : '/projet/Gestion-absences/public'; ?>/index.php/login/requestAccount" class="cta-button">
             <span>Request Access</span>
             <i class="bi bi-key-fill"></i>
         </a>
